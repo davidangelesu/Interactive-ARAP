@@ -27,8 +27,9 @@ file(GLOB SRCFILES src/*.cpp)
 
 
 
-add_executable(interactive_ARAP "main.cpp" ${SRCFILES})
-target_link_libraries(interactive_ARAP core igl::core igl::opengl igl::opengl_glfw)
+add_executable(interactive_ARAP ${SRCFILES})
+
+target_link_libraries(interactive_ARAP igl::core igl::opengl igl::opengl_glfw)
 target_include_directories(interactive_ARAP PUBLIC ${Eigen3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 
