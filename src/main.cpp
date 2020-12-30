@@ -25,21 +25,40 @@ R,r             Reset control points
         switch(key) {
             case 'L':
             case 'l':
+            {
                 // Load a new mesh in OFF format
 
                 // Clear previous mesh
                 viewer.data().clear();
 
-                // Load a mesh in OFF format
-                igl::readOFF(igl::file_dialog_open(), V, F);
+                std::string fname = igl::file_dialog_open();
 
-                // Plot the mesh
-                viewer.data().set_mesh(V, F);
-                viewer.data().face_based = true;
+                if (fname.length() == 0)
+                    return true;
 
-                // Align viewer such that mesh fills entire window
-                viewer.core().align_camera_center(V, F);
+                size_t last_dot = fname.rfind('.');
+                if (last_dot == std::string::npos)
+                {
+                    std::cerr<<"Error: No file extension found in "<<fname<<std::endl;
+                    return true;
+                }
+
+                std::string extension = fname.substr(last_dot+1);
+
+                if (extension == "off" || extension =="OFF") {
+                    igl::readOFF(fname, V, F);
+
+                    // Plot the mesh
+                    viewer.data().set_mesh(V, F);
+                    viewer.data().face_based = true;
+
+                    // Align viewer such that mesh fills entire window
+                    viewer.core().align_camera_center(V, F);
+                } else {
+                    printf("Error: %s is not a recognized file type.\n",extension.c_str());
+                }
                 break;
+            }
             case 'R':
             case 'r':
                 // Reset control point
