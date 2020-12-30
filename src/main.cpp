@@ -1,19 +1,64 @@
+#ifndef IGL_VIEWER_VIEWER_QUIET
+#define IGL_VIEWER_VIEWER_QUIET
+#endif
+
 #include <igl/readOFF.h>
 #include <igl/opengl/glfw/Viewer.h>
 
 Eigen::MatrixXd V;
 Eigen::MatrixXi F;
 
-int main(int argc, char *argv[])
-{
-    // Load a mesh in OFF format
-    // const std::string file_src = igl::file_dialog_open();
-    const std::string file_src = "../data/bunny.off";
-    igl::readOFF(file_src, V, F);
-
-    // Plot the mesh
+int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
-    viewer.data().set_mesh(V, F);
-    viewer.data().face_based = true;
+
+    // Print keyboard controls
+    std::cout<<R"(
+[click]         To place new control point
+[drag]          Now: Rotation, TODO: To move control point
+L,l             Load a new mesh in OFF format
+U,u             Update deformation (i.e., run another iteration of solver)
+R,r             Reset control points
+)";
+
+    // This function is called when a keyboard key is pressed.
+    viewer.callback_key_pressed = [&](igl::opengl::glfw::Viewer &, unsigned int key, int mod) {
+        switch(key) {
+            case 'L':
+            case 'l':
+                // Load a new mesh in OFF format
+
+                // Clear previous mesh
+                viewer.data().clear();
+
+                // Load a mesh in OFF format
+                igl::readOFF(igl::file_dialog_open(), V, F);
+
+                // Plot the mesh
+                viewer.data().set_mesh(V, F);
+                viewer.data().face_based = true;
+
+                // Align viewer such that mesh fills entire window
+                viewer.core().align_camera_center(V, F);
+                break;
+            case 'R':
+            case 'r':
+                // Reset control point
+                //TODO
+                break;
+            case 'U':
+            case 'u':
+                // Trigger an update
+                //TODO
+                break;
+            default:
+                // Disable default keyboard events
+                return true;
+        }
+        // update();
+        return true;
+    };
+
+
+
     viewer.launch();
 }
