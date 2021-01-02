@@ -1,19 +1,23 @@
+// To avoid printing of default keyboard controls
 #ifndef IGL_VIEWER_VIEWER_QUIET
 #define IGL_VIEWER_VIEWER_QUIET
 #endif
 
 #include <igl/readOFF.h>
 #include <igl/opengl/glfw/Viewer.h>
+#include <igl/unproject_onto_mesh.h>
 
 Eigen::MatrixXd V;
 Eigen::MatrixXi F;
+
+const Eigen::RowVector3d blue(0.2,0.3,0.8);
 
 int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
 
     // Print keyboard controls
     std::cout<<R"(
-[click]         To place new control point
+[click]         To pick new control point
 [drag]          Now: Rotation, TODO: To move control point
 L,l             Load a new mesh in OFF format
 U,u             Update deformation (i.e., run another iteration of solver)
@@ -62,7 +66,7 @@ R,r             Reset control points
             case 'R':
             case 'r':
                 // Reset control point
-                //TODO
+                viewer.data().clear_points();
                 break;
             case 'U':
             case 'u':
@@ -77,7 +81,30 @@ R,r             Reset control points
         return true;
     };
 
+    // This function is called when the mouse button is pressed
+    // and picks a new control point when mouse button is pressed on mesh
+    viewer.callback_mouse_down = [&](igl::opengl::glfw::Viewer& viewer, int, int)->bool {
+        // Picked face
+        int fid;
+        // Barycentric coordinates of picked point.
+        Eigen::Vector3f bc;
+        // Cast a ray in the view direction starting from the mouse position
+        double x = viewer.current_mouse_x;
+        double y = viewer.core().viewport(3) - viewer.current_mouse_y;
+        if(igl::unproject_onto_mesh(Eigen::Vector2f(x,y), viewer.core().view,
+                                    viewer.core().proj, viewer.core().viewport, V, F, fid, bc)) {
+
+            long c;
+            // Entry with highest value corresponds to the closest vertex in the triangle.
+            bc.maxCoeff(&c);
+            Eigen::RowVector3d control_point = V.row(F(fid,c));
+            viewer.data().set_points(control_point, blue);
+            return true;
+        }
+        return false;
+    };
 
 
+    viewer.data().point_size = 20;
     viewer.launch();
 }
