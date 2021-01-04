@@ -9,7 +9,8 @@ class ControlPoints
     bool add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F);
 
     Eigen::MatrixXd getPoints();
+    inline Eigen::RowVector3d getPoint(int index) { return m_points[index]; }
+    inline void updatePoint(int index, Eigen::RowVector3d newPoint) { m_points[index] = newPoint; }
   private:
-    const Eigen::RowVector3d blue = {0.2,0.3,0.8};
     std::vector<Eigen::RowVector3d> m_points;
 };

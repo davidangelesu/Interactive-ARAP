@@ -18,7 +18,6 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
       bc.maxCoeff(&c);
       Eigen::RowVector3d control_point = V.row(F(fid,c));
       m_points.push_back(control_point);
-      viewer.data().set_points(getPoints(), blue);
       return true;
   }
   return false;
