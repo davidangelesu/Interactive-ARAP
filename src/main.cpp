@@ -21,7 +21,8 @@ int main(int argc, char *argv[]) {
 
     // Print keyboard controls
     std::cout<<R"(
-[click]         To pick new control point
+[left click]    To pick new control point
+[right click]   Place new control point
 [drag]          Now: Rotation, TODO: To move control point
 L,l             Load a new mesh in OFF format
 U,u             Update deformation (i.e., run another iteration of solver)
