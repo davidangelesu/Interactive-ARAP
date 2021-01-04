@@ -5,15 +5,15 @@
 
 #include <igl/readOFF.h>
 #include <igl/opengl/glfw/Viewer.h>
-#include <igl/unproject_onto_mesh.h>
+#include "ControlPoints.h"
 
 Eigen::MatrixXd V;
 Eigen::MatrixXi F;
 
-const Eigen::RowVector3d blue(0.2,0.3,0.8);
 
 int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
+    ControlPoints controlpoints;
 
     // Print keyboard controls
     std::cout<<R"(
@@ -84,25 +84,9 @@ R,r             Reset control points
     // This function is called when the mouse button is pressed
     // and picks a new control point when mouse button is pressed on mesh
     viewer.callback_mouse_down = [&](igl::opengl::glfw::Viewer& viewer, int, int)->bool {
-        // Picked face
-        int fid;
-        // Barycentric coordinates of picked point.
-        Eigen::Vector3f bc;
-        // Cast a ray in the view direction starting from the mouse position
-        double x = viewer.current_mouse_x;
-        double y = viewer.core().viewport(3) - viewer.current_mouse_y;
-        if(igl::unproject_onto_mesh(Eigen::Vector2f(x,y), viewer.core().view,
-                                    viewer.core().proj, viewer.core().viewport, V, F, fid, bc)) {
+      return controlpoints.add(viewer,V, F);
 
-            long c;
-            // Entry with highest value corresponds to the closest vertex in the triangle.
-            bc.maxCoeff(&c);
-            Eigen::RowVector3d control_point = V.row(F(fid,c));
-            viewer.data().set_points(control_point, blue);
-            return true;
-        }
-        return false;
-    };
+   };
 
 
     viewer.data().point_size = 20;

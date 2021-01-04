@@ -23,7 +23,7 @@ set(Eigen3_INCLUDE_DIR ${LIBRARY_DIR}/Eigen/ CACHE PATH "Path to Eigen source fo
 
 # Add your project files
 include_directories("include/")
-file(GLOB SRCFILES src/*.cpp)
+file(GLOB SRCFILES include/*.h src/*.cpp)
 
 
 
