@@ -1,19 +1,23 @@
+// To avoid printing of default keyboard controls
 #ifndef IGL_VIEWER_VIEWER_QUIET
 #define IGL_VIEWER_VIEWER_QUIET
 #endif
 
 #include <igl/readOFF.h>
 #include <igl/opengl/glfw/Viewer.h>
+#include "ControlPoints.h"
 
 Eigen::MatrixXd V;
 Eigen::MatrixXi F;
 
+
 int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
+    ControlPoints controlpoints;
 
     // Print keyboard controls
     std::cout<<R"(
-[click]         To place new control point
+[click]         To pick new control point
 [drag]          Now: Rotation, TODO: To move control point
 L,l             Load a new mesh in OFF format
 U,u             Update deformation (i.e., run another iteration of solver)
@@ -62,7 +66,7 @@ R,r             Reset control points
             case 'R':
             case 'r':
                 // Reset control point
-                //TODO
+                viewer.data().clear_points();
                 break;
             case 'U':
             case 'u':
@@ -77,7 +81,14 @@ R,r             Reset control points
         return true;
     };
 
+    // This function is called when the mouse button is pressed
+    // and picks a new control point when mouse button is pressed on mesh
+    viewer.callback_mouse_down = [&](igl::opengl::glfw::Viewer& viewer, int, int)->bool {
+      return controlpoints.add(viewer,V, F);
+
+   };
 
 
+    viewer.data().point_size = 20;
     viewer.launch();
 }
