@@ -157,6 +157,11 @@ R,r             Reset control points
     };
 
 
+    // Load default mesh
+    igl::readOFF("../data/knight.off", V, F);
+    viewer.data().set_mesh(V, F);
+    viewer.data().face_based = true;
+
     viewer.data().point_size = 20;
     viewer.launch();
 }
