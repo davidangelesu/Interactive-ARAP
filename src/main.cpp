@@ -25,13 +25,15 @@ int main(int argc, char *argv[]) {
 [right click]   Place new control point
 [drag]          Now: Rotation, TODO: To move control point
 L,l             Load a new mesh in OFF format
-U,u             Update deformation (i.e., run another iteration of solver)
-R,r             Reset control points
+U,u             Undo reset
+R,r             Reset all control points
 )";
 
     const auto& update = [&]()
     {
-      viewer.data().set_points(controlpoints.getPoints(), blue);
+        // Clear all points before setting all points again (incl. new points)
+        viewer.data().clear_points();
+        viewer.data().set_points(controlpoints.getPoints(), blue);
     };
 
     // This function is called when a keyboard key is pressed.
@@ -76,7 +78,8 @@ R,r             Reset control points
             case 'R':
             case 'r':
                 // Reset control point
-                viewer.data().clear_points();
+                controlpoints.removeAllPoints();
+                update();
                 break;
             case 'U':
             case 'u':

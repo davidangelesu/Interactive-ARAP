@@ -35,3 +35,7 @@ Eigen::MatrixXd ControlPoints::getPoints()
   return result;
 }
 
+void ControlPoints::removeAllPoints()
+{
+    m_points.clear();
+}

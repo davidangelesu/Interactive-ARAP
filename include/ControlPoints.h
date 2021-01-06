@@ -7,6 +7,7 @@ class ControlPoints
 {
   public:
     bool add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F);
+    void removeAllPoints();
 
     Eigen::MatrixXd getPoints();
     inline Eigen::RowVector3d getPoint(int index) { return m_points[index]; }
