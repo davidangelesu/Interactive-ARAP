@@ -17,7 +17,13 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
       // Entry with highest value corresponds to the closest vertex in the triangle.
       bc.maxCoeff(&c);
       Eigen::RowVector3d control_point = V.row(F(fid,c));
-      m_points.push_back(control_point);
+
+      // Check if control point not already added
+      // If not, add it
+      if (std::find(m_points.begin(), m_points.end(), control_point) == m_points.end())
+      {
+          m_points.push_back(control_point);
+      }
       return true;
   }
   return false;
@@ -35,7 +41,18 @@ Eigen::MatrixXd ControlPoints::getPoints()
   return result;
 }
 
-void ControlPoints::removeAllPoints()
+Eigen::MatrixXd ControlPoints::removeAllPoints()
 {
+    Eigen::MatrixXd last_points = getPoints();
     m_points.clear();
+    return last_points;
+}
+
+void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints)
+{
+    for(int i = 0; i < initialPoints.rows(); i++)
+    {
+        Eigen::RowVector3d control_point = initialPoints.row(i);
+        m_points.push_back(control_point);
+    }
 }

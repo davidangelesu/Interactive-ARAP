@@ -13,11 +13,14 @@ Eigen::MatrixXi F;
 
 long selectedPoint = -1;
 Eigen::RowVector3f last_mouse;
+// Helper variable for 'undo'
+Eigen::MatrixXd last_controls;
+
+const Eigen::RowVector3d blue = {0.2,0.3,0.8};
 
 int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
     ControlPoints controlpoints;
-    const Eigen::RowVector3d blue = {0.2,0.3,0.8};
 
     // Print keyboard controls
     std::cout<<R"(
@@ -77,14 +80,21 @@ R,r             Reset all control points
             }
             case 'R':
             case 'r':
-                // Reset control point
-                controlpoints.removeAllPoints();
-                update();
+                // Reset control point, if available
+                if(controlpoints.getPoints().size() != 0)
+                {
+                    last_controls = controlpoints.removeAllPoints();
+                    update();
+                }
                 break;
             case 'U':
             case 'u':
-                // Trigger an update
-                //TODO
+                // Undo reset, if there aren't already any new points available
+                if(controlpoints.getPoints().size() == 0)
+                {
+                    controlpoints.setInitialPoints(last_controls);
+                    update();
+                }
                 break;
             default:
                 // Disable default keyboard events
