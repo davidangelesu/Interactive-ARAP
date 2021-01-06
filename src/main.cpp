@@ -24,12 +24,12 @@ int main(int argc, char *argv[]) {
 
     // Print keyboard controls
     std::cout<<R"(
-[left click]    To pick new control point
-[right click]   Place new control point
-[drag]          Now: Rotation, TODO: To move control point
-L,l             Load a new mesh in OFF format
-U,u             Undo reset
-R,r             Reset all control points
+[right click]           Place new control point
+[left click] + [drag]   Pick control point and move it
+[drag]                  Rotation
+L,l                     Load a new mesh in OFF format
+U,u                     Undo reset
+R,r                     Reset all control points
 )";
 
     const auto& update = [&]()
@@ -39,7 +39,7 @@ R,r             Reset all control points
         viewer.data().set_points(controlpoints.getPoints(), blue);
     };
 
-    // This function is called when a keyboard key is pressed.
+    // This function is called when a keyboard key is pressed
     viewer.callback_key_pressed = [&](igl::opengl::glfw::Viewer &, unsigned int key, int mod) {
         switch(key) {
             case 'L':
@@ -105,68 +105,71 @@ R,r             Reset all control points
     };
 
     // This function is called when the mouse button is pressed
-    // and picks a new control point when mouse button is pressed on mesh
+    // Places a new control point when right mouse button is pressed on mesh
+    // Picks a control point when left mouse button is pressed
     viewer.callback_mouse_down = [&](igl::opengl::glfw::Viewer& viewer, int one, int two)->bool {
-      last_mouse = Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3)-viewer.current_mouse_y, 0);
-      // Left click
-      if(one == 0)
-      {
-        // don't crash if no control points are available
-        if(controlpoints.getPoints().size() == 0)
-          return false;
-
-        Eigen::MatrixXf CP;
-        igl::project(Eigen::MatrixXf(controlpoints.getPoints().cast<float>()),
-            viewer.core().view, viewer.core().proj, viewer.core().viewport, CP);
-        Eigen::VectorXf D = (CP.rowwise() - last_mouse).rowwise().norm();
-        selectedPoint = (D.minCoeff(&selectedPoint) < 30)?selectedPoint: -1;
-        if(selectedPoint != -1)
+        last_mouse = Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3)-viewer.current_mouse_y, 0);
+        // Left click
+        if(one == 0)
         {
-          last_mouse(2) = CP(selectedPoint, 2);
-          update();
-          return true;
+            // don't crash if no control points are available
+            if(controlpoints.getPoints().size() == 0)
+                return false;
+
+            Eigen::MatrixXf CP;
+            igl::project(Eigen::MatrixXf(controlpoints.getPoints().cast<float>()),
+                         viewer.core().view, viewer.core().proj, viewer.core().viewport, CP);
+            Eigen::VectorXf D = (CP.rowwise() - last_mouse).rowwise().norm();
+            selectedPoint = (D.minCoeff(&selectedPoint) < 30)?selectedPoint: -1;
+            if(selectedPoint != -1)
+            {
+                last_mouse(2) = CP(selectedPoint, 2);
+                update();
+                return true;
+            }
         }
-      }
-      // right click
-      else
-      {
-        bool result = controlpoints.add(viewer,V, F);
-        update();
-        return result;
-      }
-      return false;
+            // right click
+        else
+        {
+            bool result = controlpoints.add(viewer,V, F);
+            update();
+            return result;
+        }
+        return false;
 
-   };
-
-    viewer.callback_mouse_move = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool 
-    {
-      if(selectedPoint != -1)
-      {
-        Eigen::RowVector3f drag_mouse(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y,last_mouse(2));
-        Eigen::RowVector3f drag_scene, last_scene;
-        igl::unproject(
-          drag_mouse,
-          viewer.core().view, viewer.core().proj,
-          viewer.core().viewport, drag_scene
-        );
-        igl::unproject(
-          last_mouse,
-          viewer.core().view, viewer.core().proj,
-          viewer.core().viewport, last_scene
-        );
-        auto newValue = controlpoints.getPoint(selectedPoint) + (drag_scene-last_scene).cast<double>();
-        controlpoints.updatePoint(selectedPoint, newValue);
-        last_mouse = drag_mouse;
-        update();
-        return true;
-      }
-      return false;
     };
 
+    // This function is called every time the mouse is moved
+    viewer.callback_mouse_move = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool
+    {
+        if(selectedPoint != -1)
+        {
+            Eigen::RowVector3f drag_mouse(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y,last_mouse(2));
+            Eigen::RowVector3f drag_scene, last_scene;
+            igl::unproject(
+                    drag_mouse,
+                    viewer.core().view, viewer.core().proj,
+                    viewer.core().viewport, drag_scene
+            );
+            igl::unproject(
+                    last_mouse,
+                    viewer.core().view, viewer.core().proj,
+                    viewer.core().viewport, last_scene
+            );
+            auto newValue = controlpoints.getPoint(selectedPoint) + (drag_scene-last_scene).cast<double>();
+            controlpoints.updatePoint(selectedPoint, newValue);
+            last_mouse = drag_mouse;
+            update();
+            return true;
+        }
+        return false;
+    };
+
+    // This function is called when the mouse button is released
     viewer.callback_mouse_up = [&](igl::opengl::glfw::Viewer&, int, int)->bool
     {
-      selectedPoint = -1;
-      return false;
+        selectedPoint = -1;
+        return false;
     };
 
 
