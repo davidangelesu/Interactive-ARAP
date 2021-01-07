@@ -8,8 +8,19 @@
 #include "ControlPoints.h"
 #include <iostream>
 
+#include "arap_precompute.h"
+#include "arap_single_iteration.h"
+#include <igl/min_quad_with_fixed.h>
+
+//Original Vertex Location
 Eigen::MatrixXd V;
+//Deformed Vertex Location
+Eigen::MatrixXd U;
 Eigen::MatrixXi F;
+
+//Data that stores precomputation 
+igl::min_quad_with_fixed_data<double> data;
+Eigen::SparseMatrix<double> K;
 
 long selectedPoint = -1;
 Eigen::RowVector3f last_mouse;
@@ -17,6 +28,8 @@ Eigen::RowVector3f last_mouse;
 Eigen::MatrixXd last_controls;
 
 const Eigen::RowVector3d blue = {0.2,0.3,0.8};
+
+
 
 int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
@@ -37,6 +50,11 @@ R,r                     Reset all control points
         // Clear all points before setting all points again (incl. new points)
         viewer.data().clear_points();
         viewer.data().set_points(controlpoints.getPoints(), blue);
+
+        //compute step
+        arap_single_iteration(data, K, controlpoints.getPoints(), U);
+        std::cout << "Single Step Computed\n";
+        viewer.data().set_vertices(U);
     };
 
     // This function is called when a keyboard key is pressed
@@ -66,13 +84,14 @@ R,r                     Reset all control points
 
                 if (extension == "off" || extension =="OFF") {
                     igl::readOFF(fname, V, F);
+                    U = V;
 
                     // Plot the mesh
-                    viewer.data().set_mesh(V, F);
+                    viewer.data().set_mesh(U, F);
                     viewer.data().face_based = true;
 
                     // Align viewer such that mesh fills entire window
-                    viewer.core().align_camera_center(V, F);
+                    viewer.core().align_camera_center(U, F);
                 } else {
                     printf("Error: %s is not a recognized file type.\n",extension.c_str());
                 }
@@ -84,6 +103,7 @@ R,r                     Reset all control points
                 if(controlpoints.getPoints().size() != 0)
                 {
                     last_controls = controlpoints.removeAllPoints();
+                    arap_precompute(V, F, controlpoints.getPointsVertex(), data, K);
                     update();
                 }
                 break;
@@ -93,6 +113,7 @@ R,r                     Reset all control points
                 if(controlpoints.getPoints().size() == 0)
                 {
                     controlpoints.setInitialPoints(last_controls);
+                    arap_precompute(V, F, controlpoints.getPointsVertex(), data, K);
                     update();
                 }
                 break;
@@ -131,7 +152,8 @@ R,r                     Reset all control points
             // right click
         else
         {
-            bool result = controlpoints.add(viewer,V, F);
+            bool result = controlpoints.add(viewer,U, F);
+            arap_precompute(V,F,controlpoints.getPointsVertex(),data,K);
             update();
             return result;
         }
@@ -159,6 +181,7 @@ R,r                     Reset all control points
             auto newValue = controlpoints.getPoint(selectedPoint) + (drag_scene-last_scene).cast<double>();
             controlpoints.updatePoint(selectedPoint, newValue);
             last_mouse = drag_mouse;
+            arap_precompute(V, F, controlpoints.getPointsVertex(), data, K);
             update();
             return true;
         }
@@ -174,8 +197,9 @@ R,r                     Reset all control points
 
 
     // Load default mesh
-    igl::readOFF("../data/knight.off", V, F);
-    viewer.data().set_mesh(V, F);
+    igl::readOFF("../data/bunny.off", V, F);
+    U = V;
+    viewer.data().set_mesh(U, F);
     viewer.data().face_based = true;
 
     viewer.data().point_size = 20;
