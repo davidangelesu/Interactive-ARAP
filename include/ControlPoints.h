@@ -11,8 +11,12 @@ class ControlPoints
     void setInitialPoints(Eigen::MatrixXd initialPoints);
 
     Eigen::MatrixXd getPoints();
+    Eigen::VectorXi getPointsVertex();
+    Eigen::SparseMatrix<double> getPointsAsMatrix(int numRows);
+
     inline Eigen::RowVector3d getPoint(int index) { return m_points[index]; }
     inline void updatePoint(int index, Eigen::RowVector3d newPoint) { m_points[index] = newPoint; }
   private:
     std::vector<Eigen::RowVector3d> m_points;
+    std::vector<unsigned int> m_pointsVertexIndex;
 };
