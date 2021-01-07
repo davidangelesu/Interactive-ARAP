@@ -20,9 +20,10 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
 
       // Check if control point not already added
       // If not, add it
-      if (std::find(m_points.begin(), m_points.end(), control_point) == m_points.end())
+      if (std::find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(), F(fid, c)) == m_pointsVertexIndex.end())
       {
           m_points.push_back(control_point);
+          m_pointsVertexIndex.push_back(F(fid, c));
       }
       return true;
   }
@@ -41,18 +42,50 @@ Eigen::MatrixXd ControlPoints::getPoints()
   return result;
 }
 
+Eigen::VectorXi ControlPoints::getPointsVertex()
+{
+    Eigen::VectorXi result(m_pointsVertexIndex.size());
+    for (int i = 0; i < m_pointsVertexIndex.size(); i++) {
+        result(i) = m_pointsVertexIndex[i];
+    }
+    return result;
+}
+Eigen::SparseMatrix<double> ControlPoints::getPointsAsMatrix(int numRows)
+{
+    Eigen::SparseMatrix<double> result(numRows,3);
+    std::vector< Eigen::Triplet<double> > tripletList;
+    tripletList.reserve(m_points.size()*3);
+
+    for (int i = 0; i < m_pointsVertexIndex.size(); i++) {
+        tripletList.push_back(Eigen::Triplet<double>(i, 0, m_points[i][0]));
+        tripletList.push_back(Eigen::Triplet<double>(i, 1, m_points[i][1]));
+        tripletList.push_back(Eigen::Triplet<double>(i, 2, m_points[i][2]));
+    }
+
+    result.setFromTriplets(tripletList.begin(),tripletList.end());
+
+    return result;
+}   
+
+
+
 Eigen::MatrixXd ControlPoints::removeAllPoints()
 {
-    Eigen::MatrixXd last_points = getPoints();
+    Eigen::MatrixXd last_points(m_points.size(), 4);
+    last_points.block(0,0,m_points.size(),3)= getPoints();
+    last_points.block(0, 3, m_points.size(), 1) = getPointsVertex().cast <double>();
     m_points.clear();
+    m_pointsVertexIndex.clear();
     return last_points;
 }
+
 
 void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints)
 {
     for(int i = 0; i < initialPoints.rows(); i++)
     {
-        Eigen::RowVector3d control_point = initialPoints.row(i);
+        Eigen::RowVector3d control_point = initialPoints.block(i,0,1,3);
         m_points.push_back(control_point);
+        m_pointsVertexIndex.push_back(initialPoints(i, 3));
     }
 }
