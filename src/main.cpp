@@ -178,7 +178,8 @@ R,r                     Reset all control points
                     viewer.core().view, viewer.core().proj,
                     viewer.core().viewport, last_scene
             );
-            auto newValue = controlpoints.getPoint(selectedPoint) + (drag_scene-last_scene).cast<double>();
+            auto oldVal = controlpoints.getPoint(selectedPoint);
+            auto newValue = oldVal + (drag_scene-last_scene).cast<double>();
             controlpoints.updatePoint(selectedPoint, newValue);
             last_mouse = drag_mouse;
             arap_precompute(V, F, controlpoints.getPointsVertex(), data, K);
