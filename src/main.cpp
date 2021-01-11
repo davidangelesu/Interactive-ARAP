@@ -10,7 +10,6 @@
 
 #include "arap_precompute.h"
 #include "arap_single_iteration.h"
-#include <igl/min_quad_with_fixed.h>
 
 //Original Vertex Location
 Eigen::MatrixXd V;
@@ -18,9 +17,8 @@ Eigen::MatrixXd V;
 Eigen::MatrixXd U;
 Eigen::MatrixXi F;
 
-//Data that stores precomputation 
-igl::min_quad_with_fixed_data<double> data;
-Eigen::SparseMatrix<double> K;
+
+std::vector<Eigen::Matrix<double, 3, -1>> K;
 
 long selectedPoint = -1;
 Eigen::RowVector3f last_mouse;
@@ -52,7 +50,7 @@ R,r                     Reset all control points
         viewer.data().set_points(controlpoints.getPoints(), blue);
 
         //compute step
-        arap_single_iteration(data, K, controlpoints.getPoints(), U);
+        arap_single_iteration( K, controlpoints.getPoints(),F, U);
         std::cout << "Single Step Computed\n";
         viewer.data().set_vertices(U);
     };
@@ -103,7 +101,7 @@ R,r                     Reset all control points
                 if(controlpoints.getPoints().size() != 0)
                 {
                     last_controls = controlpoints.removeAllPoints();
-                    arap_precompute(V, F, controlpoints.getPointsVertex(), data, K);
+                    arap_precompute(V, F, K);
                     update();
                 }
                 break;
@@ -113,7 +111,7 @@ R,r                     Reset all control points
                 if(controlpoints.getPoints().size() == 0)
                 {
                     controlpoints.setInitialPoints(last_controls);
-                    arap_precompute(V, F, controlpoints.getPointsVertex(), data, K);
+                    arap_precompute(V, F, K);
                     update();
                 }
                 break;
@@ -153,7 +151,7 @@ R,r                     Reset all control points
         else
         {
             bool result = controlpoints.add(viewer,U, F);
-            arap_precompute(V,F,controlpoints.getPointsVertex(),data,K);
+            arap_precompute(V,F,K);
             update();
             return result;
         }
@@ -182,7 +180,7 @@ R,r                     Reset all control points
             auto newValue = oldVal + (drag_scene-last_scene).cast<double>();
             controlpoints.updatePoint(selectedPoint, newValue);
             last_mouse = drag_mouse;
-            arap_precompute(V, F, controlpoints.getPointsVertex(), data, K);
+            arap_precompute(V, F, K);
             update();
             return true;
         }
