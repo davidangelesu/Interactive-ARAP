@@ -63,12 +63,10 @@ R,r                     Reset all control points
             {
                 // Load a new mesh in OFF format
 
-                // Clear previous mesh
-                viewer.data().clear();
-
                 std::string fname = igl::file_dialog_open();
 
                 if (fname.length() == 0)
+                    // 'Cancel' pressed, leave mesh as it is
                     return true;
 
                 size_t last_dot = fname.rfind('.');
@@ -81,6 +79,12 @@ R,r                     Reset all control points
                 std::string extension = fname.substr(last_dot+1);
 
                 if (extension == "off" || extension =="OFF") {
+                    // Clear previous mesh and control points
+                    viewer.data().clear();
+                    controlpoints.removeAllPoints();
+                    // Delete last saved control points to disable 'undo' for new mesh
+                    last_controls = Eigen::MatrixXd();
+
                     igl::readOFF(fname, V, F);
                     U = V;
 
@@ -107,10 +111,11 @@ R,r                     Reset all control points
                 break;
             case 'U':
             case 'u':
-                // Undo reset, if there aren't already any new points available
-                if(controlpoints.getPoints().size() == 0)
+                // Undo reset, if last control points exists
+                if(last_controls.size() != 0)
                 {
                     controlpoints.setInitialPoints(last_controls);
+                    last_controls = Eigen::MatrixXd();
                     arap_precompute(V, F, K);
                     update();
                 }
@@ -147,7 +152,7 @@ R,r                     Reset all control points
                 return true;
             }
         }
-            // right click
+        // right click
         else
         {
             bool result = controlpoints.add(viewer,U, F);
