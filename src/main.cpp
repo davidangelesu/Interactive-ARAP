@@ -39,8 +39,10 @@ int main(int argc, char *argv[]) {
 [left click] + [drag]   Pick control point and move it
 [drag]                  Rotation
 L,l                     Load a new mesh in OFF format
+N,n                     Compute Next Step
 U,u                     Undo reset
 R,r                     Reset all control points
+
 )";
 
     const auto& set_original_mesh = [&](Eigen::MatrixXd vertices, Eigen::MatrixXi faces)
@@ -103,6 +105,10 @@ R,r                     Reset all control points
                 }
                 break;
             }
+            case 'N':
+            case 'n':
+                update();
+                break;
             case 'R':
             case 'r':
                 // Reset control point, if available
@@ -130,7 +136,7 @@ R,r                     Reset all control points
                 // Disable default keyboard events
                 return true;
         }
-        // update();
+        //update();
         return true;
     };
 
@@ -204,8 +210,6 @@ R,r                     Reset all control points
         selectedPoint = -1;
         return false;
     };
-
-
     // Load default mesh
     igl::readOFF("../data/bunny.off", V, F);
     U = V;
