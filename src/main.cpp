@@ -43,6 +43,16 @@ U,u                     Undo reset
 R,r                     Reset all control points
 )";
 
+    const auto& set_original_mesh = [&](Eigen::MatrixXd vertices, Eigen::MatrixXi faces)
+    {
+        // Plot the mesh
+        viewer.data().set_mesh(vertices, faces);
+        viewer.data().face_based = true;
+
+        // Align viewer such that mesh fills entire window
+        viewer.core().align_camera_center(vertices, faces);
+    };
+
     const auto& update = [&]()
     {
         // Clear all points before setting all points again (incl. new points)
@@ -87,13 +97,7 @@ R,r                     Reset all control points
 
                     igl::readOFF(fname, V, F);
                     U = V;
-
-                    // Plot the mesh
-                    viewer.data().set_mesh(U, F);
-                    viewer.data().face_based = true;
-
-                    // Align viewer such that mesh fills entire window
-                    viewer.core().align_camera_center(U, F);
+                    set_original_mesh(U, F);
                 } else {
                     printf("Error: %s is not a recognized file type.\n",extension.c_str());
                 }
@@ -105,8 +109,10 @@ R,r                     Reset all control points
                 if(controlpoints.getPoints().size() != 0)
                 {
                     last_controls = controlpoints.removeAllPoints();
-                    arap_precompute(V, F, K);
-                    update();
+                    // Clear all points
+                    viewer.data().clear_points();
+                    U = V;
+                    set_original_mesh(U, F);
                 }
                 break;
             case 'U':
@@ -203,8 +209,7 @@ R,r                     Reset all control points
     // Load default mesh
     igl::readOFF("../data/bunny.off", V, F);
     U = V;
-    viewer.data().set_mesh(U, F);
-    viewer.data().face_based = true;
+    set_original_mesh(U, F);
 
     viewer.data().point_size = 20;
     viewer.launch();
