@@ -165,6 +165,7 @@ R,r                     Reset all control points
             if(selectedPoint != -1)
             {
                 last_mouse(2) = CP(selectedPoint, 2);
+                arap_precompute(V,F,K);
                 update();
                 return true;
             }

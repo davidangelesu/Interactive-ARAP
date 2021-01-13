@@ -2,6 +2,7 @@
 #include <iostream>
 #include "../include/cotagent_matrix.h"
 #include "../include/cotagent.h"
+#include <igl/adjacency_list.h>
 
 
 void arap_precompute(const Eigen::MatrixXd& V,
@@ -23,20 +24,15 @@ void arap_precompute(const Eigen::MatrixXd& V,
 	Eigen::SparseMatrix<double> L;
 	cotagent_matrix(V, F, L);
 
-	//loop through faces
-	for (int f = 0; f < numFaces; f++) {
+    std::vector<std::vector<double>> neighbors(numVertex);
+    igl::adjacency_list(F, neighbors);
 
-		//loop through face vertex
-		for (int oppositeVertex = 0; oppositeVertex < 3; oppositeVertex++) {
-			int i = (oppositeVertex + 1) % 3;
-			int j = (oppositeVertex + 2) % 3;
-
-			int v_i = F(f, i);
-			int v_j = F(f, j);
-			Eigen::Vector3d e_ij = V.row(F(f, i)) - V.row(F(f, j));
+    for (unsigned int i = 0; i < numVertex; ++i) {
+        for (unsigned int j : neighbors[i]) {
+			Eigen::Vector3d e_ij = V.row(i) - V.row(j);
 			//add an additional column 
-			K[v_i].conservativeResize(K[v_i].rows(), K[v_i].cols() + 1);
-			K[v_i].col(K[v_i].cols() - 1) = L.coeff(v_i, v_j) * e_ij;
+			K[i].conservativeResize(K[i].rows(), K[i].cols() + 1);
+			K[i].col(K[i].cols() - 1) = L.coeff(i, j) * e_ij;
 		}
 	}
 
