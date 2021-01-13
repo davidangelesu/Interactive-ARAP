@@ -10,13 +10,15 @@
 
 #include "arap_precompute.h"
 #include "arap_single_iteration.h"
+#include "init_system_matrix.h"
 
 //Original Vertex Location
 Eigen::MatrixXd V;
 //Deformed Vertex Location
 Eigen::MatrixXd U;
 Eigen::MatrixXi F;
-
+//System matrix
+Eigen::SparseMatrix<double> m_systemMatrix;
 
 std::vector<Eigen::Matrix<double, 3, -1>> K;
 
@@ -45,7 +47,7 @@ R,r                     Reset all control points
 
 )";
 
-    const auto& set_original_mesh = [&](Eigen::MatrixXd vertices, Eigen::MatrixXi faces)
+    const auto& set_base_mesh = [&](Eigen::MatrixXd vertices, Eigen::MatrixXi faces)
     {
         // Plot the mesh
         viewer.data().set_mesh(vertices, faces);
@@ -53,6 +55,9 @@ R,r                     Reset all control points
 
         // Align viewer such that mesh fills entire window
         viewer.core().align_camera_center(vertices, faces);
+
+        // Init system matrix
+        init_system_matrix(vertices, faces, m_systemMatrix);
     };
 
     const auto& update = [&]()
@@ -62,7 +67,7 @@ R,r                     Reset all control points
         viewer.data().set_points(controlpoints.getPoints(), blue);
 
         //compute step
-        arap_single_iteration( K, controlpoints.getPoints(),F, U);
+        arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix);
         std::cout << "Single Step Computed\n";
         viewer.data().set_vertices(U);
     };
@@ -99,7 +104,7 @@ R,r                     Reset all control points
 
                     igl::readOFF(fname, V, F);
                     U = V;
-                    set_original_mesh(U, F);
+                    set_base_mesh(U, F);
                 } else {
                     printf("Error: %s is not a recognized file type.\n",extension.c_str());
                 }
@@ -118,7 +123,7 @@ R,r                     Reset all control points
                     // Clear all points
                     viewer.data().clear_points();
                     U = V;
-                    set_original_mesh(U, F);
+                    set_base_mesh(U, F);
                 }
                 break;
             case 'U':
@@ -211,9 +216,9 @@ R,r                     Reset all control points
         return false;
     };
     // Load default mesh
-    igl::readOFF("../data/bunny.off", V, F);
+    igl::readOFF("../data/armadillo_1k.off", V, F);
     U = V;
-    set_original_mesh(U, F);
+    set_base_mesh(U, F);
 
     viewer.data().point_size = 20;
     viewer.launch();

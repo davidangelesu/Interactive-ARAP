@@ -11,7 +11,10 @@
 // Outputs:
 //   U  #V by dim list of new positions (see input)
 void arap_single_iteration(
-  const std::vector<Eigen::Matrix<double,3,-1>> & K,
-  const Eigen::MatrixXd & bc,
+  const std::vector<Eigen::Matrix<double,3,-1>>& K,
+  const Eigen::MatrixXd& constraints,
+  const Eigen::VectorXi& constraintIndices,
+  const Eigen::MatrixXd& V,
   const Eigen::MatrixXi& F,
-  Eigen::MatrixXd & U);
+  Eigen::MatrixXd& U,
+  Eigen::SparseMatrix<double>& m_systemMatrix);
