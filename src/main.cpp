@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 [left click] + [drag]   Pick control point and move it
 [drag]                  Rotation
 L,l                     Load a new mesh in OFF format
-N,n                     Compute Next Step
+N,n                     Update deformation (i.e., run next iteration of solver)
 U,u                     Undo reset
 R,r                     Reset all control points
 
