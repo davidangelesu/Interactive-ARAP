@@ -1,4 +1,5 @@
 #include "arap_single_iteration.h"
+#include "cotagent_matrix.h"
 #include <igl/min_quad_with_fixed.h>
 #include <igl/adjacency_list.h>
 
@@ -52,12 +53,16 @@ void arap_single_iteration(
     m_rhsY.setZero();
     m_rhsZ.setZero();
 
+    //calculate cotagent matrix (with weights) w_i,j
+    Eigen::SparseMatrix<double> L;
+    cotagent_matrix(V, F, L);
+
     // Compute right hand side
     for (unsigned int i = 0; i < numVertex; ++i) {
         Eigen::Vector3d sum(0.0, 0.0, 0.0);
         // Loop over one-ring neighborhood
         for (unsigned int j: neighbors[i]) {
-            double w_ij = 1.0;
+            double w_ij = L.coeff(i, j);
             sum += w_ij / 2.0 * (R[i] + R[j]) * (V.row(i) - V.row(j)).transpose();
         }
         m_rhsX(i) = sum.x();
