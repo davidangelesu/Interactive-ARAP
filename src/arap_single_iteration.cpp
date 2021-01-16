@@ -40,7 +40,7 @@ void arap_single_iteration(
 		Eigen::JacobiSVD<Eigen::Matrix3d> svd(S_i,Eigen::ComputeFullU|Eigen::ComputeFullV);
 		R[i] = svd.matrixV() * svd.matrixU().transpose();
 	}
-	std::cout << "ROTATIONS COMPUTED\n";
+//	std::cout << "ROTATIONS COMPUTED\n";
 
 	//**********Global Optimization
     Eigen::SparseMatrix<double> systemMatrix = m_systemMatrix;
@@ -102,5 +102,5 @@ void arap_single_iteration(
         U.row(i) = Eigen::Vector3d(x(i), y(i), z(i));
     }
 
-    std::cout << "U has been updated\n";
+//    std::cout << "U has been updated\n";
 }

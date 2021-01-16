@@ -60,17 +60,20 @@ R,r                     Reset all control points
         init_system_matrix(vertices, faces, m_systemMatrix);
     };
 
-    const auto& update = [&]()
-    {
+    viewer.callback_pre_draw = [&](igl::opengl::glfw::Viewer &) -> bool {
         // Clear all points before setting all points again (incl. new points)
         viewer.data().clear_points();
         viewer.data().set_points(controlpoints.getPoints(), blue);
 
         //compute step
-        arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix);
-        std::cout << "Single Step Computed\n";
+        if(controlpoints.getPoints().rows() > 0)
+          arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix);
         viewer.data().set_vertices(U);
+
+      return false;
+
     };
+
 
     // This function is called when a keyboard key is pressed
     viewer.callback_key_pressed = [&](igl::opengl::glfw::Viewer &, unsigned int key, int mod) {
@@ -112,7 +115,7 @@ R,r                     Reset all control points
             }
             case 'N':
             case 'n':
-                update();
+//                update();
                 break;
             case 'R':
             case 'r':
@@ -134,14 +137,12 @@ R,r                     Reset all control points
                     controlpoints.setInitialPoints(last_controls);
                     last_controls = Eigen::MatrixXd();
                     arap_precompute(V, F, K);
-                    update();
                 }
                 break;
             default:
                 // Disable default keyboard events
                 return true;
         }
-        //update();
         return true;
     };
 
@@ -166,7 +167,6 @@ R,r                     Reset all control points
             {
                 last_mouse(2) = CP(selectedPoint, 2);
                 arap_precompute(V,F,K);
-                update();
                 return true;
             }
         }
@@ -175,7 +175,6 @@ R,r                     Reset all control points
         {
             bool result = controlpoints.add(viewer,U, F);
             arap_precompute(V,F,K);
-            update();
             return result;
         }
         return false;
@@ -204,7 +203,6 @@ R,r                     Reset all control points
             controlpoints.updatePoint(selectedPoint, newValue);
             last_mouse = drag_mouse;
             arap_precompute(V, F, K);
-            update();
             return true;
         }
         return false;
