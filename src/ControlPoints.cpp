@@ -28,8 +28,39 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
       return true;
   }
   return false;
-
 }
+
+bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F)
+{
+    // Picked face
+    int fid;
+    // Barycentric coordinates of picked point.
+    Eigen::Vector3f bc;
+    // Cast a ray in the view direction starting from the mouse position
+    double x = viewer.current_mouse_x;
+    double y = viewer.core().viewport(3) - viewer.current_mouse_y;
+    if (igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer.core().view,
+        viewer.core().proj, viewer.core().viewport, V, F, fid, bc)) {
+
+        long c;
+        // Entry with highest value corresponds to the closest vertex in the triangle.
+        bc.maxCoeff(&c);
+        Eigen::RowVector3d control_point = V.row(F(fid, c));
+
+        // Check if control point not already added
+        // If iter is
+        auto iter = std::find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(), F(fid, c));
+        if (iter != m_pointsVertexIndex.end())
+        {
+            int index = iter - m_pointsVertexIndex.begin();
+            m_points.erase(m_points.begin()+index);
+            m_pointsVertexIndex.erase(m_pointsVertexIndex.begin() + index);
+        }
+        return true;
+    }
+    return false;
+}
+
 
 Eigen::MatrixXd ControlPoints::getPoints()
 {

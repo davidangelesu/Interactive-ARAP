@@ -38,10 +38,10 @@ int main(int argc, char *argv[]) {
     // Print keyboard controls
     std::cout<<R"(
 [right click]           Place new control point
+[right click]+ [ctl]    Remove control point
 [left click] + [drag]   Pick control point and move it
 [drag]                  Rotation
 L,l                     Load a new mesh in OFF format
-N,n                     Update deformation (i.e., run next iteration of solver)
 U,u                     Undo reset
 R,r                     Reset all control points
 
@@ -113,10 +113,6 @@ R,r                     Reset all control points
                 }
                 break;
             }
-            case 'N':
-            case 'n':
-//                update();
-                break;
             case 'R':
             case 'r':
                 // Reset control point, if available
@@ -154,28 +150,44 @@ R,r                     Reset all control points
         // Left click
         if(one == 0)
         {
-            // don't crash if no control points are available
-            if(controlpoints.getPoints().size() == 0)
-                return false;
+            //No Control,Shift,Control+Shift
+            if (two == 0) {
+                // don't crash if no control points are available
+                if(controlpoints.getPoints().size() == 0)
+                    return false;
 
-            Eigen::MatrixXf CP;
-            igl::project(Eigen::MatrixXf(controlpoints.getPoints().cast<float>()),
-                         viewer.core().view, viewer.core().proj, viewer.core().viewport, CP);
-            Eigen::VectorXf D = (CP.rowwise() - last_mouse).rowwise().norm();
-            selectedPoint = (D.minCoeff(&selectedPoint) < 30)?selectedPoint: -1;
-            if(selectedPoint != -1)
-            {
-                last_mouse(2) = CP(selectedPoint, 2);
-                arap_precompute(V,F,K);
-                return true;
+                Eigen::MatrixXf CP;
+                igl::project(Eigen::MatrixXf(controlpoints.getPoints().cast<float>()),
+                             viewer.core().view, viewer.core().proj, viewer.core().viewport, CP);
+                Eigen::VectorXf D = (CP.rowwise() - last_mouse).rowwise().norm();
+                selectedPoint = (D.minCoeff(&selectedPoint) < 30)?selectedPoint: -1;
+                if(selectedPoint != -1)
+                {
+                    last_mouse(2) = CP(selectedPoint, 2);
+                    arap_precompute(V,F,K);
+                    return true;
+                }
             }
         }
         // right click
         else
         {
-            bool result = controlpoints.add(viewer,U, F);
-            arap_precompute(V,F,K);
-            return result;
+            //No Control,Shift,Control+Shift
+            //Add point
+            if (two == 0) {
+                bool result = controlpoints.add(viewer,U, F);
+                arap_precompute(V,F,K);
+                return result;
+            }
+            //Control
+            //Remove Point
+            else if (two == 2) {
+                bool result = controlpoints.remove(viewer, U, F);
+                if (controlpoints.getPoints().size() == 0)
+                    return false;
+                arap_precompute(V, F, K);
+                return result;
+            }
         }
         return false;
 
