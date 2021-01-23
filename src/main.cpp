@@ -7,6 +7,10 @@
 #include <igl/opengl/glfw/Viewer.h>
 #include "ControlPoints.h"
 #include <iostream>
+#include <igl/opengl/glfw/imgui/ImGuiMenu.h>
+#include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
+#include <imgui/imgui.h>
+
 
 #include "arap_precompute.h"
 #include "arap_single_iteration.h"
@@ -35,6 +39,8 @@ const Eigen::RowVector3d blue = {0.2,0.3,0.8};
 
 int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
+    igl::opengl::glfw::imgui::ImGuiMenu menu;
+    viewer.plugins.push_back(&menu);
     ControlPoints controlpoints;
 
     // Print keyboard controls
@@ -55,7 +61,6 @@ W,w                     Switch between cotangent and uniform weights (w_ij = 1)
         // Plot the mesh
         viewer.data().set_mesh(vertices, faces);
         viewer.data().face_based = true;
-
         // Align viewer such that mesh fills entire window
         viewer.core().align_camera_center(vertices, faces);
 
@@ -77,6 +82,26 @@ W,w                     Switch between cotangent and uniform weights (w_ij = 1)
 
     };
 
+
+    menu.callback_draw_custom_window = [&]()
+    {
+      ImGui::SetNextWindowPos(ImVec2(180.0f * menu.menu_scaling(), 10), ImGuiCond_FirstUseEver);
+      ImGui::SetNextWindowSize(ImVec2(350, 160), ImGuiCond_FirstUseEver);
+      ImGui::Begin("Interactive ARAP", nullptr, ImGuiWindowFlags_NoSavedSettings);
+      ImGui::Text("[right click]               Place new control point");
+      ImGui::Text("[left click] + [drag]       Pick control point and move it");
+      ImGui::Text("[drag]                      Rotation");
+      ImGui::Text("L,l                         Load a new mesh in OFF format");
+      ImGui::Text("N,n                         Update deformation (i.e., run next iteration of solver)");
+      ImGui::Text("U,u                         Undo reset");
+      ImGui::Text("R,r                         Reset all control points");
+      if (uniform_weights)
+        ImGui::Text("W, w                        Switch to cotangent weights");
+      else
+        ImGui::Text("W,w                         Switch to uniform weights");
+      ImGui::End();
+
+    };
 
     // This function is called when a keyboard key is pressed
     viewer.callback_key_pressed = [&](igl::opengl::glfw::Viewer &, unsigned int key, int mod) {

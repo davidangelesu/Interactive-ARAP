@@ -12,6 +12,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 option(LIBIGL_USE_STATIC_LIBRARY     "Use libigl as static library" OFF)
 option(LIBIGL_WITH_OPENGL            "Use OpenGL"         ON)
 option(LIBIGL_WITH_OPENGL_GLFW       "Use GLFW"           ON)
+option(LIBIGL_WITH_OPENGL_GLFW_IMGUI "Use ImGui"          ON)
 
 find_package(LIBIGL REQUIRED)
 
@@ -29,7 +30,7 @@ file(GLOB SRCFILES src/*.cpp)
 
 add_executable(interactive_ARAP ${SRCFILES} include/init_system_matrix.h src/init_system_matrix.cpp)
 
-target_link_libraries(interactive_ARAP igl::core igl::opengl igl::opengl_glfw)
+target_link_libraries(interactive_ARAP igl::core igl::opengl igl::opengl_glfw igl::opengl_glfw_imgui)
 target_include_directories(interactive_ARAP PUBLIC ${Eigen3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 
