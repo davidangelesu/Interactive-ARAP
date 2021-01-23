@@ -11,7 +11,8 @@ void arap_single_iteration(
   const Eigen::MatrixXd& V,
   const Eigen::MatrixXi& F,
   Eigen::MatrixXd& U,
-  Eigen::SparseMatrix<double>& m_systemMatrix)
+  Eigen::SparseMatrix<double>& m_systemMatrix,
+  bool use_uniform_weights)
 {
 	//number of vertex
 	unsigned int numVertex = U.rows();
@@ -55,7 +56,7 @@ void arap_single_iteration(
 
     //calculate cotagent matrix (with weights) w_i,j
     Eigen::SparseMatrix<double> L;
-    cotagent_matrix(V, F, L);
+    cotagent_matrix(V, F, L, use_uniform_weights);
 
     // Compute right hand side
     for (unsigned int i = 0; i < numVertex; ++i) {

@@ -26,6 +26,8 @@ long selectedPoint = -1;
 Eigen::RowVector3f last_mouse;
 // Helper variable for 'undo'
 Eigen::MatrixXd last_controls;
+bool dragHappend = false;
+bool uniform_weights = false;
 
 const Eigen::RowVector3d blue = {0.2,0.3,0.8};
 
@@ -44,6 +46,7 @@ L,l                     Load a new mesh in OFF format
 N,n                     Update deformation (i.e., run next iteration of solver)
 U,u                     Undo reset
 R,r                     Reset all control points
+W,w                     Switch between cotangent and uniform weights (w_ij = 1)
 
 )";
 
@@ -57,7 +60,7 @@ R,r                     Reset all control points
         viewer.core().align_camera_center(vertices, faces);
 
         // Init system matrix
-        init_system_matrix(vertices, faces, m_systemMatrix);
+        init_system_matrix(vertices, faces, m_systemMatrix, uniform_weights);
     };
 
     viewer.callback_pre_draw = [&](igl::opengl::glfw::Viewer &) -> bool {
@@ -66,8 +69,8 @@ R,r                     Reset all control points
         viewer.data().set_points(controlpoints.getPoints(), blue);
 
         //compute step
-        if(controlpoints.getPoints().rows() > 0)
-          arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix);
+        if(controlpoints.getPoints().rows() > 0 && dragHappend)
+          arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix, uniform_weights);
         viewer.data().set_vertices(U);
 
       return false;
@@ -136,9 +139,15 @@ R,r                     Reset all control points
                 {
                     controlpoints.setInitialPoints(last_controls);
                     last_controls = Eigen::MatrixXd();
-                    arap_precompute(V, F, K);
+                    arap_precompute(V, F, K, uniform_weights);
                 }
                 break;
+            case 'W':
+            case 'w':
+                uniform_weights = !uniform_weights;
+                init_system_matrix(V, F, m_systemMatrix, uniform_weights);
+                arap_precompute(V, F, K, uniform_weights);
+
             default:
                 // Disable default keyboard events
                 return true;
@@ -166,7 +175,7 @@ R,r                     Reset all control points
             if(selectedPoint != -1)
             {
                 last_mouse(2) = CP(selectedPoint, 2);
-                arap_precompute(V,F,K);
+                arap_precompute(V,F,K, uniform_weights);
                 return true;
             }
         }
@@ -174,7 +183,7 @@ R,r                     Reset all control points
         else
         {
             bool result = controlpoints.add(viewer,U, F);
-            arap_precompute(V,F,K);
+            arap_precompute(V,F,K, uniform_weights);
             return result;
         }
         return false;
@@ -202,7 +211,8 @@ R,r                     Reset all control points
             auto newValue = oldVal + (drag_scene-last_scene).cast<double>();
             controlpoints.updatePoint(selectedPoint, newValue);
             last_mouse = drag_mouse;
-            arap_precompute(V, F, K);
+            dragHappend = true;
+            arap_precompute(V, F, K, uniform_weights);
             return true;
         }
         return false;
