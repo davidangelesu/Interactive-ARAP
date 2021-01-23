@@ -38,7 +38,7 @@ void cotagent_matrix(
 
 			//cotagent at oppositeVertex 
 			double cot = cotagent(p_i,p_j,p_oppositeVertex);
-      if(!use_uniform_weights)
+      if(use_uniform_weights)
         cot = 1.0;
 
 			//per edge weight contribution
