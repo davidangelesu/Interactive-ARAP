@@ -1,6 +1,7 @@
 
 #include <igl/unproject_onto_mesh.h>
 #include <igl/opengl/glfw/Viewer.h>
+#include <igl/project.h>
 #include <vector>
 
 class ControlPoints
@@ -21,5 +22,4 @@ class ControlPoints
   private:
     std::vector<Eigen::RowVector3d> m_points;
     std::vector<unsigned int> m_pointsVertexIndex;
-    bool isPointInside(int x, int y, const std::vector < std::tuple<int, int>>& polygon);
 };

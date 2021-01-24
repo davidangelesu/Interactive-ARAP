@@ -240,7 +240,10 @@ R,r                         Reset all control points
     viewer.callback_mouse_up = [&](igl::opengl::glfw::Viewer&, int, int)->bool
     {
         selectedPoint = -1;
-        isDefiningControlArea = false;
+        if (isDefiningControlArea) {
+            isDefiningControlArea = false;
+            controlpoints.add(viewer, V, F, borderPixelsControlArea);
+        }
         return false;
     };
     // Load default mesh

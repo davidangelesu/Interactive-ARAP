@@ -1,5 +1,5 @@
 #include "ControlPoints.h"
-
+#include "polygon_test.h"
 /* Add Control Point in current location of Mouse*/
 bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eigen::MatrixXi F)
 {
@@ -33,7 +33,26 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
 /*Add control Points to All vertices inside PolYgon*/
 bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F, const std::vector < std::tuple<int, int>>& borderPixelsControlArea)
 {
+    //Loop through the whole mesh!!
+    //Test each point
+    for (int i = 0; i < V.rows(); i++) {
+        Eigen::Matrix<float, 3, 1> point = V.row(0).transpose().cast <float>();
 
+        //Project to Viewport
+        Eigen::Vector2i projectedPoint;
+        //TODO project
+
+        
+        //TODO add constraints to all  points that are inside Polygon
+        //Maybe create a group for all this constraints so that you can move them togetter????
+        if (isInside(borderPixelsControlArea, projectedPoint.x, projectedPoint.y)) {
+
+        }
+        
+        
+    }
+   
+    return false;
 };
 
 bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F)
