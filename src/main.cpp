@@ -27,6 +27,10 @@ Eigen::RowVector3f last_mouse;
 // Helper variable for 'undo'
 Eigen::MatrixXd last_controls;
 
+// defining Control Area:
+bool isDefiningControlArea = false;
+std::vector < std::tuple<int, int>> borderPixelsControlArea;
+
 const Eigen::RowVector3d blue = {0.2,0.3,0.8};
 
 
@@ -37,13 +41,14 @@ int main(int argc, char *argv[]) {
 
     // Print keyboard controls
     std::cout<<R"(
-[right click]           Place new control point
-[right click]+ [ctl]    Remove control point
-[left click] + [drag]   Pick control point and move it
-[drag]                  Rotation
-L,l                     Load a new mesh in OFF format
-U,u                     Undo reset
-R,r                     Reset all control points
+[right click]               Place new control point
+[right click] + [ctl]       Remove control point
+[right click] + [alt]       Define Control Area
+[left click] + [drag]       Pick control point and move it
+[drag]                      Rotation
+L,l                         Load a new mesh in OFF format
+U,u                         Undo reset
+R,r                         Reset all control points
 
 )";
 
@@ -174,6 +179,7 @@ R,r                     Reset all control points
         {
             //No Control,Shift,Control+Shift
             //Add point
+            std::cout << "TWO\n" << two << std::endl;
             if (two == 0) {
                 bool result = controlpoints.add(viewer,U, F);
                 arap_precompute(V,F,K);
@@ -187,6 +193,12 @@ R,r                     Reset all control points
                     return false;
                 arap_precompute(V, F, K);
                 return result;
+            }
+            //Alt
+            //Start defining Area
+            else if (two == 4) {
+                isDefiningControlArea = true;
+                borderPixelsControlArea = std::vector<std::tuple<int, int>>();
             }
         }
         return false;
@@ -217,6 +229,10 @@ R,r                     Reset all control points
             arap_precompute(V, F, K);
             return true;
         }
+        if (isDefiningControlArea) {
+            borderPixelsControlArea.push_back(std::tuple<int, int>{viewer.current_mouse_x, viewer.current_mouse_y});
+            return true;
+        }
         return false;
     };
 
@@ -224,6 +240,7 @@ R,r                     Reset all control points
     viewer.callback_mouse_up = [&](igl::opengl::glfw::Viewer&, int, int)->bool
     {
         selectedPoint = -1;
+        isDefiningControlArea = false;
         return false;
     };
     // Load default mesh

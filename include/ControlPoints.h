@@ -10,6 +10,7 @@ class ControlPoints
     bool remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F);
     Eigen::MatrixXd removeAllPoints();
     void setInitialPoints(Eigen::MatrixXd initialPoints);
+    bool add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F, const std::vector < std::tuple<int, int>>& borderPixelsControlArea);
 
     Eigen::MatrixXd getPoints();
     Eigen::VectorXi getPointsVertex();
@@ -20,4 +21,5 @@ class ControlPoints
   private:
     std::vector<Eigen::RowVector3d> m_points;
     std::vector<unsigned int> m_pointsVertexIndex;
+    bool isPointInside(int x, int y, const std::vector < std::tuple<int, int>>& polygon);
 };

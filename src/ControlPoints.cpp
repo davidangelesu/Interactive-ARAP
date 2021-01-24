@@ -1,6 +1,6 @@
 #include "ControlPoints.h"
 
-
+/* Add Control Point in current location of Mouse*/
 bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eigen::MatrixXi F)
 {
   // Picked face
@@ -29,6 +29,12 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
   }
   return false;
 }
+
+/*Add control Points to All vertices inside PolYgon*/
+bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F, const std::vector < std::tuple<int, int>>& borderPixelsControlArea)
+{
+
+};
 
 bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F)
 {
@@ -120,3 +126,4 @@ void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints)
         m_pointsVertexIndex.push_back(initialPoints(i, 3));
     }
 }
+
