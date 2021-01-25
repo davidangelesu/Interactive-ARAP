@@ -36,22 +36,29 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Ei
     //Loop through the whole mesh!!
     //Test each point
     for (int i = 0; i < V.rows(); i++) {
-        Eigen::Matrix<float, 3, 1> point = V.row(0).transpose().cast <float>();
-
         //Project to Viewport
-        Eigen::Vector2i projectedPoint;
-        //TODO project
+        Eigen::Matrix<float,4,1> tmp;
+        Eigen::RowVector3d control_point = V.row(i);
+        tmp << V.row(i).transpose().cast<float>(),1;
 
-        
-        //TODO add constraints to all  points that are inside Polygon
-        //Maybe create a group for all this constraints so that you can move them togetter????
-        if (isInside(borderPixelsControlArea, projectedPoint.x, projectedPoint.y)) {
+        tmp = viewer.core().view * tmp;
+        tmp = viewer.core().proj * tmp;
+        tmp = tmp.array() / tmp(3);
+        tmp = tmp.array() * 0.5f + 0.5f;
+        tmp(0) = tmp(0) * viewer.core().viewport(2) + viewer.core().viewport(0);
+        tmp(1) = tmp(1) * viewer.core().viewport(3) + viewer.core().viewport(1);
 
+        //TODO: Maybe create a group for all this constraints so that you can move them togetter????
+        if (isInside(borderPixelsControlArea, tmp.x(), tmp.y())) {
+            // Check if control point not already added
+            // If not, add it
+            if (std::find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(), i) == m_pointsVertexIndex.end())
+            {
+                m_points.push_back(control_point);
+                m_pointsVertexIndex.push_back(i);
+            }
         }
-        
-        
     }
-   
     return false;
 };
 

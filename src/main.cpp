@@ -5,6 +5,7 @@
 
 #include <igl/readOFF.h>
 #include <igl/opengl/glfw/Viewer.h>
+#include <igl/unproject_on_plane.h>
 #include "ControlPoints.h"
 #include <iostream>
 
@@ -19,6 +20,8 @@ Eigen::MatrixXd U;
 Eigen::MatrixXi F;
 //System matrix
 Eigen::SparseMatrix<double> m_systemMatrix;
+//Control points for constraints
+ControlPoints controlpoints;
 
 std::vector<Eigen::Matrix<double, 3, -1>> K;
 
@@ -30,14 +33,15 @@ Eigen::MatrixXd last_controls;
 // defining Control Area:
 bool isDefiningControlArea = false;
 std::vector < std::tuple<int, int>> borderPixelsControlArea;
+Eigen::Matrix<double, -1, 3> borderPointsControlArea;
+Eigen::Matrix<double, -1, 3> tempBorderPoint;
 
 const Eigen::RowVector3d blue = {0.2,0.3,0.8};
-
+const Eigen::RowVector3d green = {0.2,0.6,0.3};
 
 
 int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
-    ControlPoints controlpoints;
 
     // Print keyboard controls
     std::cout<<R"(
@@ -65,14 +69,32 @@ R,r                         Reset all control points
         init_system_matrix(vertices, faces, m_systemMatrix);
     };
 
+    // This function is called before the draw procedure of Preview3D
     viewer.callback_pre_draw = [&](igl::opengl::glfw::Viewer &) -> bool {
         // Clear all points before setting all points again (incl. new points)
         viewer.data().clear_points();
-        viewer.data().set_points(controlpoints.getPoints(), blue);
+        viewer.data().clear_edges();
+        viewer.data().add_points(controlpoints.getPoints(), blue);
+        viewer.data().add_points(borderPointsControlArea, green);
+
+        // Draw edges between border points
+        if (borderPointsControlArea.rows() > 0) {
+            for (int i = 0; i < borderPointsControlArea.rows() - 1; ++i) {
+                viewer.data().add_edges(borderPointsControlArea.row(i),
+                                        borderPointsControlArea.row(i+1),
+                                        green);
+            };
+        }
+
+        // Draw temporary edge between last border point and mouse cursor
+        if (borderPointsControlArea.rows() > 0 && tempBorderPoint.rows() > 0) {
+            viewer.data().add_edges(borderPointsControlArea.row(borderPointsControlArea.rows() - 1), tempBorderPoint.row(0), green);
+        }
 
         //compute step
+        // TODO: Fix arap computation when whole region is selected
         if(controlpoints.getPoints().rows() > 0)
-          arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix);
+          // arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix);
         viewer.data().set_vertices(U);
 
       return false;
@@ -195,14 +217,39 @@ R,r                         Reset all control points
                 return result;
             }
             //Alt
-            //Start defining Area
+            //Start/continue defining control area
             else if (two == 4) {
+                std::cout<< "Alt pressed" << std::endl;
                 isDefiningControlArea = true;
-                borderPixelsControlArea = std::vector<std::tuple<int, int>>();
+                // Save screen coordinates to compute control points later
+                borderPixelsControlArea.push_back({viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y});
+
+                // Save world coordinates to display control area in GUI
+                borderPointsControlArea.conservativeResize(borderPointsControlArea.rows() + 1, borderPointsControlArea.cols());
+                borderPointsControlArea.row(borderPointsControlArea.rows() - 1) =
+                        igl::unproject(Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y, 0),
+                                       viewer.core().view, viewer.core().proj, viewer.core().viewport).cast<double>();
+                return true;
             }
         }
         return false;
 
+    };
+
+    // This function is called when a keyboard key is release
+    viewer.callback_key_up = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool {
+        if (two == 4) {
+            // User stops pressing alt
+            // End of defining control area
+            std::cout<< "Alt released" << std::endl;
+            isDefiningControlArea = false;
+            borderPointsControlArea = Eigen::Matrix<double, -1, 3>();
+            tempBorderPoint = Eigen::Matrix<double, -1, 3>();
+            controlpoints.add(viewer, V, F, borderPixelsControlArea);
+            borderPixelsControlArea = std::vector < std::tuple<int, int>>();
+            return true;
+        }
+        return false;
     };
 
     // This function is called every time the mouse is moved
@@ -230,7 +277,15 @@ R,r                         Reset all control points
             return true;
         }
         if (isDefiningControlArea) {
-            borderPixelsControlArea.push_back(std::tuple<int, int>{viewer.current_mouse_x, viewer.current_mouse_y});
+            // Compute temporary border point to display on GUI
+            int idx = borderPointsControlArea.size() - 1;
+            Eigen::RowVector3d lastBorderPoint = borderPointsControlArea.row(idx);
+            if (tempBorderPoint.size() == 0) {
+                tempBorderPoint.conservativeResize(1, 3);
+            }
+            tempBorderPoint.row(0) =
+                    igl::unproject(Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y, 0),
+                                   viewer.core().view, viewer.core().proj, viewer.core().viewport).cast<double>();
             return true;
         }
         return false;
@@ -240,12 +295,9 @@ R,r                         Reset all control points
     viewer.callback_mouse_up = [&](igl::opengl::glfw::Viewer&, int, int)->bool
     {
         selectedPoint = -1;
-        if (isDefiningControlArea) {
-            isDefiningControlArea = false;
-            controlpoints.add(viewer, V, F, borderPixelsControlArea);
-        }
         return false;
     };
+
     // Load default mesh
     igl::readOFF("../data/armadillo_1k.off", V, F);
     U = V;
