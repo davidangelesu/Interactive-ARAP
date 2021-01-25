@@ -238,7 +238,7 @@ R,r                         Reset all control points
 
     // This function is called when a keyboard key is release
     viewer.callback_key_up = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool {
-        if (two == 4) {
+        if (one == 342) {
             // User stops pressing alt
             // End of defining control area
             std::cout<< "Alt released" << std::endl;
@@ -278,8 +278,6 @@ R,r                         Reset all control points
         }
         if (isDefiningControlArea) {
             // Compute temporary border point to display on GUI
-            int idx = borderPointsControlArea.size() - 1;
-            Eigen::RowVector3d lastBorderPoint = borderPointsControlArea.row(idx);
             if (tempBorderPoint.size() == 0) {
                 tempBorderPoint.conservativeResize(1, 3);
             }
