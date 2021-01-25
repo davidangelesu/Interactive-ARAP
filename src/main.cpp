@@ -94,7 +94,7 @@ R,r                         Reset all control points
         //compute step
         // TODO: Fix arap computation when whole region is selected
         if(controlpoints.getPoints().rows() > 0)
-          // arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix);
+          arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix);
         viewer.data().set_vertices(U);
 
       return false;
@@ -149,7 +149,7 @@ R,r                         Reset all control points
                     // Clear all points
                     viewer.data().clear_points();
                     U = V;
-                    set_base_mesh(U, F);
+                    //set_base_mesh(U, F);
                 }
                 break;
             case 'U':
@@ -247,6 +247,9 @@ R,r                         Reset all control points
             tempBorderPoint = Eigen::Matrix<double, -1, 3>();
             controlpoints.add(viewer, V, F, borderPixelsControlArea);
             borderPixelsControlArea = std::vector < std::tuple<int, int>>();
+            if (controlpoints.getPoints().size() == 0)
+                return false;
+            arap_precompute(V, F, K);
             return true;
         }
         return false;
