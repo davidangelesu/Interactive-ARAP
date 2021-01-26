@@ -64,7 +64,7 @@ R,r                         Reset all control points
 
         // Align viewer such that mesh fills entire window
         viewer.core().align_camera_center(vertices, faces);
-
+        arap_precompute(vertices, faces, K);
         // Init system matrix
         init_system_matrix(vertices, faces, m_systemMatrix);
     };
@@ -135,6 +135,7 @@ R,r                         Reset all control points
                     igl::readOFF(fname, V, F);
                     U = V;
                     set_base_mesh(U, F);
+                    
                 } else {
                     printf("Error: %s is not a recognized file type.\n",extension.c_str());
                 }
@@ -159,7 +160,7 @@ R,r                         Reset all control points
                 {
                     controlpoints.setInitialPoints(last_controls);
                     last_controls = Eigen::MatrixXd();
-                    arap_precompute(V, F, K);
+                    
                 }
                 break;
             default:
@@ -191,7 +192,7 @@ R,r                         Reset all control points
                 if(selectedPoint != -1)
                 {
                     last_mouse(2) = CP(selectedPoint, 2);
-                    arap_precompute(V,F,K);
+                    
                     return true;
                 }
             }
@@ -201,10 +202,8 @@ R,r                         Reset all control points
         {
             //No Control,Shift,Control+Shift
             //Add point
-            std::cout << "TWO\n" << two << std::endl;
             if (two == 0) {
                 bool result = controlpoints.add(viewer,U, F);
-                arap_precompute(V,F,K);
                 return result;
             }
             //Control
@@ -213,13 +212,11 @@ R,r                         Reset all control points
                 bool result = controlpoints.remove(viewer, U, F);
                 if (controlpoints.getPoints().size() == 0)
                     return false;
-                arap_precompute(V, F, K);
                 return result;
             }
             //Alt
             //Start/continue defining control area
             else if (two == 4) {
-                std::cout<< "Alt pressed" << std::endl;
                 isDefiningControlArea = true;
                 // Save screen coordinates to compute control points later
                 borderPixelsControlArea.push_back({viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y});
@@ -238,18 +235,17 @@ R,r                         Reset all control points
 
     // This function is called when a keyboard key is release
     viewer.callback_key_up = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool {
+        //Alt has been released
         if (one == 342) {
             // User stops pressing alt
             // End of defining control area
-            std::cout<< "Alt released" << std::endl;
             isDefiningControlArea = false;
             borderPointsControlArea = Eigen::Matrix<double, -1, 3>();
             tempBorderPoint = Eigen::Matrix<double, -1, 3>();
             controlpoints.add(viewer, V, F, borderPixelsControlArea);
             borderPixelsControlArea = std::vector < std::tuple<int, int>>();
-            if (controlpoints.getPoints().size() == 0)
-                return false;
-            arap_precompute(V, F, K);
+            // if (controlpoints.getPoints().size() == 0)
+            //     return false;
             return true;
         }
         return false;
@@ -276,7 +272,7 @@ R,r                         Reset all control points
             auto newValue = oldVal + (drag_scene-last_scene).cast<double>();
             controlpoints.updatePoint(selectedPoint, newValue);
             last_mouse = drag_mouse;
-            arap_precompute(V, F, K);
+        
             return true;
         }
         if (isDefiningControlArea) {
