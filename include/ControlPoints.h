@@ -3,6 +3,7 @@
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/project.h>
 #include <vector>
+#include "Polygon.h"
 
 class ControlPoints
 {
@@ -11,14 +12,13 @@ class ControlPoints
     bool remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F);
     Eigen::MatrixXd removeAllPoints();
     void setInitialPoints(Eigen::MatrixXd initialPoints);
-    bool add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, const std::vector < std::tuple<int, int>>& borderPixelsControlArea);
-    bool addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, const std::vector < std::tuple<int, int>>& borderPixelsControlArea);
+    bool add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  GUI::Polygon& controlArea);
+    bool addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  GUI::Polygon& controlArea);
     void clearSelectedPoints();
     Eigen::MatrixXd getPoints();
     Eigen::MatrixXd getSelectedPoints();
     Eigen::VectorXi getPointsVertex();
     Eigen::SparseMatrix<double> getPointsAsMatrix(int numRows);
-
     inline Eigen::RowVector3d getPoint(int index) { return m_points[index]; }
     inline void updatePoint(int index, Eigen::RowVector3d newPoint) { m_points[index] = newPoint; }
   private:

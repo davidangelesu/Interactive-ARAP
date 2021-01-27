@@ -7,6 +7,7 @@
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/unproject_on_plane.h>
 #include "ControlPoints.h"
+#include "polygon.h"
 #include <iostream>
 
 #include "arap_precompute.h"
@@ -33,7 +34,8 @@ Eigen::MatrixXd last_controls;
 // defining Control Area:
 bool isDefiningControlArea = false;
 //defining Dragging Control Area
-std::vector < std::tuple<int, int>> borderPixelsControlArea;
+GUI::Polygon borderPixelsControlArea;
+
 Eigen::Matrix<double, -1, 3> borderPointsControlArea;
 Eigen::Matrix<double, -1, 3> tempBorderPoint;
 
@@ -228,7 +230,7 @@ R,r                                 Reset all control points
             else if (two == 4 ||two==5) {
                 isDefiningControlArea = true;
                 // Save screen coordinates to compute control points later
-                borderPixelsControlArea.push_back({viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y});
+                borderPixelsControlArea.addVertex(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y);
 
                 // Save world coordinates to display control area in GUI
                 borderPointsControlArea.conservativeResize(borderPointsControlArea.rows() + 1, borderPointsControlArea.cols());
@@ -261,11 +263,11 @@ R,r                                 Reset all control points
             //if shift is still mantained pressed
             if (two == 1) {
                 controlpoints.addSelectedPoints(viewer, V, borderPixelsControlArea);
-                borderPixelsControlArea = std::vector < std::tuple<int, int>>();
+                borderPixelsControlArea.clearVertices();
             }
             else {
                 controlpoints.add(viewer, V, borderPixelsControlArea);
-                borderPixelsControlArea = std::vector < std::tuple<int, int>>();
+                borderPixelsControlArea.clearVertices();
                 return true;
             }
             

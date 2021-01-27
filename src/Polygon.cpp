@@ -6,7 +6,7 @@
 
 // Given three colinear points p, q, r, the function checks if 
 // point q lies on line segment 'pr' 
-bool onSegment(Point p, Point q, Point r)
+bool onSegment(GUI::Point p, GUI::Point q, GUI::Point r)
 {
     if (q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
         q.y <= std:: max(p.y, r.y) && q.y >= std::min(p.y, r.y))
@@ -19,7 +19,7 @@ bool onSegment(Point p, Point q, Point r)
 // 0 --> p, q and r are colinear 
 // 1 --> Clockwise 
 // 2 --> Counterclockwise 
-int orientation(Point p, Point q, Point r)
+int orientation(GUI::Point p, GUI::Point q, GUI::Point r)
 {
     int val = (q.y - p.y) * (r.x - q.x) -
         (q.x - p.x) * (r.y - q.y);
@@ -30,7 +30,7 @@ int orientation(Point p, Point q, Point r)
 
 // The function that returns true if line segment 'p1q1' 
 // and 'p2q2' intersect. 
-bool doIntersect(Point p1, Point q1, Point p2, Point q2)
+bool doIntersect(GUI::Point p1, GUI::Point q1, GUI::Point p2, GUI::Point q2)
 {
     // Find the four orientations needed for general and 
     // special cases 
@@ -60,7 +60,7 @@ bool doIntersect(Point p1, Point q1, Point p2, Point q2)
 }
 
 // Returns true if the point p lies inside the polygon with n vertices 
-bool Polygon::isInside( int x, int y)
+bool GUI::Polygon::isInside( int x, int y)
 {
     // There must be at least 3 vertices in polygon 
     if (m_vertices.size() < 3) return false;

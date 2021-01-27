@@ -1,9 +1,12 @@
+#ifndef POLYGON_H
+#define POLYGON_H
+
 #include <vector>
 
 // Code to check if a given point lies inside a given polygon 
 // Based on https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/ 
 namespace GUI {
-
+	struct Point { int x; int y; };
 	class Polygon {
 	public:
 		bool isInside(int x, int y);
@@ -14,5 +17,8 @@ namespace GUI {
 
 	};
 
-	struct Point { int x; int y; };
+	
 };
+
+
+#endif // !POLYGON_H

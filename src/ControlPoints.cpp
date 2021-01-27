@@ -1,5 +1,5 @@
 #include "ControlPoints.h"
-#include "polygon_test.h"
+
 /* Add Control Point in current location of Mouse*/
 bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eigen::MatrixXi F)
 {
@@ -31,7 +31,7 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
 }
 
 /*Add control Points that are inside Control Area.*/
-bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, const std::vector < std::tuple<int, int>>& borderPixelsControlArea)
+bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  GUI::Polygon& controlArea)
 {
     //Loop through the whole mesh!!
     //Test each point
@@ -49,7 +49,7 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, co
         tmp(1) = tmp(1) * viewer.core().viewport(3) + viewer.core().viewport(1);
 
         //TODO: Maybe create a group for all this constraints so that you can move them togetter????
-        if (isInside(borderPixelsControlArea, tmp.x(), tmp.y())) {
+        if (controlArea.isInside(tmp.x(), tmp.y())) {
             // Check if control point not already added
             // If not, add it
             if (std::find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(), i) == m_pointsVertexIndex.end())
@@ -63,7 +63,7 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, co
 };
 
 /*Add all control Points that are inside Control Area to list of selected control points.*/
-bool ControlPoints::addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, const std::vector < std::tuple<int, int>>& borderPixelsControlArea)
+bool ControlPoints::addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, GUI::Polygon& controlArea)
 {
     bool hasNewEntryAdded = false;
     //Loop through all the control points
@@ -81,7 +81,7 @@ bool ControlPoints::addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::
         tmp(1) = tmp(1) * viewer.core().viewport(3) + viewer.core().viewport(1);
         
         //Check if control Point is inside Control Area and not in list of selectedPoints.
-        if (isInside(borderPixelsControlArea, tmp.x(), tmp.y()) 
+        if (controlArea.isInside( tmp.x(), tmp.y())
             && (std::find(m_selectedPointsIndex.begin(), m_selectedPointsIndex.end(), i)== m_selectedPointsIndex.end())) {
             m_selectedPointsIndex.push_back(i);
             hasNewEntryAdded = true;
