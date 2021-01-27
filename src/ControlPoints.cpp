@@ -90,6 +90,51 @@ bool ControlPoints::addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::
     return hasNewEntryAdded;
 };
 
+long ControlPoints::addSelectedPoint(igl::opengl::glfw::Viewer& viewer,Eigen::Vector3f mouseLocation) {
+    //if there are no control Points
+    if (m_points.size() == 0) {
+        return false;
+    }
+    Eigen::MatrixXf projectedControlPoints;
+    igl::project(Eigen::MatrixXf(getPoints().cast<float>()),
+        viewer.core().view, viewer.core().proj, viewer.core().viewport, projectedControlPoints);
+
+    //Calculate the norm of the difference of the mouse location and the projected control points
+    Eigen::VectorXf D = (projectedControlPoints.rowwise() - mouseLocation.transpose()).rowwise().norm();
+    //Obtain index of the selected point if it is close enough
+    long selectedPoint = (D.minCoeff(&selectedPoint) < 30) ? selectedPoint : -1;
+
+    
+    //if selected point not already added...
+    if (selectedPoint!=-1 && std::find(m_selectedPointsIndex.begin(), m_selectedPointsIndex.end(),(int)selectedPoint) == m_selectedPointsIndex.end()) {
+        m_selectedPointsIndex.push_back(selectedPoint);
+       
+    }
+    return selectedPoint;
+}
+
+
+bool ControlPoints::removeSelectedPoint(igl::opengl::glfw::Viewer& viewer, Eigen::Vector3f mouseLocation) {
+    //if there are no control Points
+    if (m_points.size() == 0) {
+        return false;
+    }
+    Eigen::MatrixXf projectedControlPoints;
+    igl::project(Eigen::MatrixXf(getPoints().cast<float>()),
+        viewer.core().view, viewer.core().proj, viewer.core().viewport, projectedControlPoints);
+
+    //Calculate the norm of the difference of the mouse location and the projected control points
+    Eigen::VectorXf D = (projectedControlPoints.rowwise() - mouseLocation.transpose()).rowwise().norm();
+    //Obtain index of the selected point if it is close enough
+    long selectedPoint = (D.minCoeff(&selectedPoint) < 30) ? selectedPoint : -1;
+
+    //remove selected Point
+    if (selectedPoint != -1) {
+        std::remove(m_selectedPointsIndex.begin(), m_selectedPointsIndex.end(), (int)selectedPoint);
+        return true;
+    }
+    return false;
+}
 
 
 
@@ -125,8 +170,11 @@ bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,
 }
 
 void ControlPoints::clearSelectedPoints() {
+   
     m_selectedPointsIndex.clear();
+   
 }
+
 
 
 Eigen::MatrixXd ControlPoints::getPoints()
@@ -141,10 +189,12 @@ Eigen::MatrixXd ControlPoints::getPoints()
 
 Eigen::MatrixXd ControlPoints::getSelectedPoints()
 {
+   
+
     Eigen::MatrixXd result(m_selectedPointsIndex.size(),3);
+   
     for (int i = 0; i < m_selectedPointsIndex.size(); i++)
     {
-
         result.row(i) = m_points[m_selectedPointsIndex[i]];
     }
     return result;
@@ -199,3 +249,10 @@ void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints)
         m_pointsVertexIndex.push_back(initialPoints(i, 3));
     }
 }
+
+
+void ControlPoints::updatePoints(Eigen::RowVector3d translation) {
+    for (int i=0; i < m_selectedPointsIndex.size(); i++) {
+        updatePoint(m_selectedPointsIndex[i], translation);
+    }
+};

@@ -183,29 +183,20 @@ R,r                                 Reset all control points
     // Places a new control point when right mouse button is pressed on mesh
     // Picks a control point when left mouse button is pressed
     viewer.callback_mouse_down = [&](igl::opengl::glfw::Viewer& viewer, int one, int two)->bool {
-        last_mouse = Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3)-viewer.current_mouse_y, 0);
-        std::cout << "Mouse down\n";
-        std::cout << "[ " << one << "," << two << "]\n";
+        std::cout << "MOUSE DOWN" << one << " , " << two << "\n";
+        last_mouse= Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y, 0);
         // Left click
         if(one == 0)
         {
-            //No Control,Shift,Control+Shift
-            if (two == 0) {
-                // don't crash if no control points are available
-                if(controlpoints.getPoints().size() == 0)
-                    return false;
-
-                Eigen::MatrixXf CP;
-                igl::project(Eigen::MatrixXf(controlpoints.getPoints().cast<float>()),
-                             viewer.core().view, viewer.core().proj, viewer.core().viewport, CP);
-                Eigen::VectorXf D = (CP.rowwise() - last_mouse).rowwise().norm();
-                selectedPoint = (D.minCoeff(&selectedPoint) < 30)?selectedPoint: -1;
-                if(selectedPoint != -1)
-                {
-                    last_mouse(2) = CP(selectedPoint, 2);
-                    
-                    return true;
-                }
+            //No button pressed or Shift pressed
+            if (two == 0 ||two==1) {
+                selectedPoint=controlpoints.addSelectedPoint(viewer,last_mouse);
+               
+               
+            }
+            //if shift +control pressed
+            else if (two == 3) {
+                controlpoints.removeSelectedPoint(viewer, last_mouse);
             }
         }
         // right click
@@ -214,6 +205,7 @@ R,r                                 Reset all control points
             //No Control,Shift,Control+Shift
             //Add point
             if (two == 0) {
+                
                 bool result = controlpoints.add(viewer,U, F);
                 return result;
             }
@@ -221,8 +213,6 @@ R,r                                 Reset all control points
             //Remove Point
             else if (two == 2) {
                 bool result = controlpoints.remove(viewer, U, F);
-                if (controlpoints.getPoints().size() == 0)
-                    return false;
                 return result;
             }
             //Alt ==4 , Alt+shift=5
@@ -282,8 +272,10 @@ R,r                                 Reset all control points
     // This function is called every time the mouse is moved
     viewer.callback_mouse_move = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool
     {
+      
         if(selectedPoint != -1)
         {
+           
             Eigen::RowVector3f drag_mouse(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y,last_mouse(2));
             Eigen::RowVector3f drag_scene, last_scene;
             igl::unproject(
@@ -296,9 +288,11 @@ R,r                                 Reset all control points
                     viewer.core().view, viewer.core().proj,
                     viewer.core().viewport, last_scene
             );
-            auto oldVal = controlpoints.getPoint(selectedPoint);
-            auto newValue = oldVal + (drag_scene-last_scene).cast<double>();
-            controlpoints.updatePoint(selectedPoint, newValue);
+                
+            auto translation = (drag_scene - last_scene).cast<double>();
+          /*  auto oldVal = controlpoints.getPoint(selectedPoint);
+            auto newValue = oldVal + (drag_scene-last_scene).cast<double>();*/
+            controlpoints.updatePoints(translation);
             last_mouse = drag_mouse;
         
             return true;
@@ -317,8 +311,11 @@ R,r                                 Reset all control points
     };
 
     // This function is called when the mouse button is released
-    viewer.callback_mouse_up = [&](igl::opengl::glfw::Viewer&, int, int)->bool
-    {
+    viewer.callback_mouse_up = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool
+    {  
+        if (two == 0) {
+            controlpoints.clearSelectedPoints();
+        }
         selectedPoint = -1;
         return false;
     };

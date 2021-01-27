@@ -13,14 +13,19 @@ class ControlPoints
     Eigen::MatrixXd removeAllPoints();
     void setInitialPoints(Eigen::MatrixXd initialPoints);
     bool add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  GUI::Polygon& controlArea);
+
+    long addSelectedPoint(igl::opengl::glfw::Viewer& viewer, Eigen::Vector3f mouseLocation);
     bool addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  GUI::Polygon& controlArea);
     void clearSelectedPoints();
+    bool removeSelectedPoint(igl::opengl::glfw::Viewer& viewer, Eigen::Vector3f mouseLocation);
+  
     Eigen::MatrixXd getPoints();
     Eigen::MatrixXd getSelectedPoints();
     Eigen::VectorXi getPointsVertex();
     Eigen::SparseMatrix<double> getPointsAsMatrix(int numRows);
     inline Eigen::RowVector3d getPoint(int index) { return m_points[index]; }
-    inline void updatePoint(int index, Eigen::RowVector3d newPoint) { m_points[index] = newPoint; }
+    inline void updatePoint(int index, Eigen::RowVector3d translataion) { m_points[index] =  getPoint(index)+ translataion; }
+    void updatePoints( Eigen::RowVector3d transltation);
   private:
     //Values of all control Points
     std::vector<Eigen::RowVector3d> m_points;
