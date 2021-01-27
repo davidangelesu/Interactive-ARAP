@@ -1,7 +1,7 @@
-#include "polygon_test.h"
+#include "polygon.h"
 #include<algorithm> 
 
-/* Code based on https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/  */
+/* Code for the Logic of Is Inside based on https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/  */
 
 
 // Given three colinear points p, q, r, the function checks if 
@@ -59,11 +59,11 @@ bool doIntersect(Point p1, Point q1, Point p2, Point q2)
     return false; // Doesn't fall in any of the above cases 
 }
 
-// Returns true if the point p lies inside the polygon[] with n vertices 
-bool isInside(std::vector<std::tuple<int,int>> polygon, int x, int y)
+// Returns true if the point p lies inside the polygon with n vertices 
+bool Polygon::isInside( int x, int y)
 {
-    // There must be at least 3 vertices in polygon[] 
-    if (polygon.size() < 3) return false;
+    // There must be at least 3 vertices in polygon 
+    if (m_vertices.size() < 3) return false;
 
     Point p_current{ x,y };
 
@@ -74,12 +74,12 @@ bool isInside(std::vector<std::tuple<int,int>> polygon, int x, int y)
     int count = 0, i = 0;
     do
     {
-        int next = (i + 1) % polygon.size();
+        int next = (i + 1) % m_vertices.size();
 
         // Check if the line segment from 'p' to 'extreme' intersects 
         // with the line segment from 'polygon at i' to 'polygon at next vertex' 
-        Point p_1{ std::get<0>(polygon[i]),std::get<1>(polygon[i]) };
-        Point p_2{ std::get<0>(polygon[next]),std::get<1>(polygon[next]) };
+        Point p_1{ m_vertices[i].x,m_vertices[i].y };
+        Point p_2{ m_vertices[next].x,m_vertices[next].y };
         if (doIntersect(p_1, p_2, p_current, p_extreme))
         {
             // If the point 'p' is colinear with line segment 'i-next', 
