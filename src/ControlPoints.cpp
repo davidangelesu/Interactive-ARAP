@@ -30,8 +30,8 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
   return false;
 }
 
-/*Add control Points to All vertices inside PolYgon*/
-bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F, const std::vector < std::tuple<int, int>>& borderPixelsControlArea)
+/*Add control Points that are inside Control Area.*/
+bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, const std::vector < std::tuple<int, int>>& borderPixelsControlArea)
 {
     //Loop through the whole mesh!!
     //Test each point
@@ -61,6 +61,37 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Ei
     }
     return false;
 };
+
+/*Add all control Points that are inside Control Area to list of selected control points.*/
+bool ControlPoints::addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, const std::vector < std::tuple<int, int>>& borderPixelsControlArea)
+{
+    bool hasNewEntryAdded = false;
+    //Loop through all the control points
+    for (int i = 0; i < m_points.size(); i++)
+    {
+        //Project to Viewport
+        Eigen::Matrix<float, 4, 1> tmp;
+        Eigen::RowVector3d control_point = m_points[i];
+        tmp << control_point.transpose().cast<float>(), 1;
+        tmp = viewer.core().view * tmp;
+        tmp = viewer.core().proj * tmp;
+        tmp = tmp.array() / tmp(3);
+        tmp = tmp.array() * 0.5f + 0.5f;
+        tmp(0) = tmp(0) * viewer.core().viewport(2) + viewer.core().viewport(0);
+        tmp(1) = tmp(1) * viewer.core().viewport(3) + viewer.core().viewport(1);
+        
+        //Check if control Point is inside Control Area and not in list of selectedPoints.
+        if (isInside(borderPixelsControlArea, tmp.x(), tmp.y()) 
+            && (std::find(m_selectedPointsIndex.begin(), m_selectedPointsIndex.end(), i)== m_selectedPointsIndex.end())) {
+            m_selectedPointsIndex.push_back(i);
+            hasNewEntryAdded = true;
+        }
+    }
+    return hasNewEntryAdded;
+};
+
+
+
 
 bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F)
 {
@@ -93,16 +124,30 @@ bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,
     return false;
 }
 
+void ControlPoints::clearSelectedPoints() {
+    m_selectedPointsIndex.clear();
+}
+
 
 Eigen::MatrixXd ControlPoints::getPoints()
 {
-  Eigen::MatrixXd result;
-  result.conservativeResize(m_points.size(), 3);
+  Eigen::MatrixXd result(m_points.size(), 3);
   for(int i = 0; i < m_points.size(); i++)
   {
     result.row(i) = m_points[i];
   }
   return result;
+}
+
+Eigen::MatrixXd ControlPoints::getSelectedPoints()
+{
+    Eigen::MatrixXd result(m_selectedPointsIndex.size(),3);
+    for (int i = 0; i < m_selectedPointsIndex.size(); i++)
+    {
+
+        result.row(i) = m_points[m_selectedPointsIndex[i]];
+    }
+    return result;
 }
 
 Eigen::VectorXi ControlPoints::getPointsVertex()
@@ -113,6 +158,8 @@ Eigen::VectorXi ControlPoints::getPointsVertex()
     }
     return result;
 }
+
+
 Eigen::SparseMatrix<double> ControlPoints::getPointsAsMatrix(int numRows)
 {
     Eigen::SparseMatrix<double> result(numRows,3);
@@ -152,4 +199,3 @@ void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints)
         m_pointsVertexIndex.push_back(initialPoints(i, 3));
     }
 }
-
