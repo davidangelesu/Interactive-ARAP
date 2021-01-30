@@ -49,14 +49,7 @@ const Eigen::RowVector3d blue = {0.2,0.3,0.8};
 const Eigen::RowVector3d green = {0.2,0.6,0.3};
 const Eigen::RowVector3d red = { 0.8,0.0,0.1 };
 
-int main(int argc, char *argv[]) {
-    igl::opengl::glfw::Viewer viewer;
-    igl::opengl::glfw::imgui::ImGuiMenu menu;
-    viewer.plugins.push_back(&menu);
-    ControlPoints controlpoints;
-
-    // Print keyboard controls
-    std::cout<<R"(
+const std::string controlInstructions = R"(
 [right click]                       Place new control point
 [right click] + [ctl]               Remove control point
 [right click] + [alt]               Define Control Area
@@ -69,6 +62,16 @@ U,u                                 Undo reset
 R,r                                 Reset all control points
 
 )";
+
+
+int main(int argc, char *argv[]) {
+    igl::opengl::glfw::Viewer viewer;
+    igl::opengl::glfw::imgui::ImGuiMenu menu;
+    viewer.plugins.push_back(&menu);
+    ControlPoints controlpoints;
+
+    // Print keyboard controls
+    std::cout<< controlInstructions ;
 
     const auto& set_base_mesh = [&](Eigen::MatrixXd vertices, Eigen::MatrixXi faces)
     {
@@ -125,13 +128,14 @@ R,r                                 Reset all control points
       ImGui::SetNextWindowPos(ImVec2(180.0f * menu.menu_scaling(), 10), ImGuiCond_FirstUseEver);
       ImGui::SetNextWindowSize(ImVec2(350, 160), ImGuiCond_FirstUseEver);
       ImGui::Begin("Interactive ARAP", nullptr, ImGuiWindowFlags_NoSavedSettings);
-      ImGui::Text("[right click]               Place new control point");
-      ImGui::Text("[left click] + [drag]       Pick control point and move it");
-      ImGui::Text("[drag]                      Rotation");
-      ImGui::Text("L,l                         Load a new mesh in OFF format");
-      ImGui::Text("N,n                         Update deformation (i.e., run next iteration of solver)");
-      ImGui::Text("U,u                         Undo reset");
-      ImGui::Text("R,r                         Reset all control points");
+      ImGui::Text(controlInstructions.c_str());
+//      ImGui::Text("[right click]               Place new control point");
+//      ImGui::Text("[left click] + [drag]       Pick control point and move it");
+//      ImGui::Text("[drag]                      Rotation");
+//      ImGui::Text("L,l                         Load a new mesh in OFF format");
+//      ImGui::Text("N,n                         Update deformation (i.e., run next iteration of solver)");
+//      ImGui::Text("U,u                         Undo reset");
+//      ImGui::Text("R,r                         Reset all control points");
       if (uniform_weights)
         ImGui::Text("W, w                        Switch to cotangent weights");
       else
