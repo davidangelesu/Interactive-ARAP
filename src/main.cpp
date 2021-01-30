@@ -217,7 +217,6 @@ R,r                                 Reset all control points
     // Places a new control point when right mouse button is pressed on mesh
     // Picks a control point when left mouse button is pressed
     viewer.callback_mouse_down = [&](igl::opengl::glfw::Viewer& viewer, int one, int two)->bool {
-        std::cout << "MOUSE DOWN" << one << " , " << two << "\n";
         last_mouse= Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y, 0);
         // Left click
         if(one == 0)
@@ -273,8 +272,6 @@ R,r                                 Reset all control points
     // This function is called when a keyboard key is release
     viewer.callback_key_up = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool {
 
-        std::cout << "Key up\n";
-        std::cout << "[ " << one << "," << two << "]\n";
         //Alt has been released
         // User stops pressing alt
         if (one == 342) {
