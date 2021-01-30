@@ -110,7 +110,7 @@ R,r                                 Reset all control points
 
         //compute step
         // TODO: Fix arap computation when whole region is selected
-        if(controlpoints.getPoints().rows() > 0 && dragHappend)
+        if(controlpoints.getPoints().rows() > 0 )
           arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix, uniform_weights);
 
         viewer.data().set_vertices(U);
