@@ -36,6 +36,7 @@ Eigen::RowVector3f last_mouse;
 Eigen::MatrixXd last_controls;
 bool dragHappend = false;
 bool uniform_weights = false;
+float uniform_weight_value = 0.0;
 
 // defining Control Area:
 bool isDefiningControlArea = false;
@@ -124,6 +125,8 @@ int main(int argc, char *argv[]) {
 
     menu.callback_draw_viewer_menu = [&]() 
     {
+      ImGui::Checkbox("use uniform weights", &uniform_weights);
+      ImGui::DragFloat("uniform weight", &uniform_weight_value, 0.0, 0.0, 3.0);
 
     };
     // draw the ImGUI window
