@@ -12,5 +12,6 @@ void arap_precompute(
 	const Eigen::MatrixXd& V,
 	const Eigen::MatrixXi& F,
 	std::vector<Eigen::Matrix<double,3,-1>>& K,
-  bool use_uniform_weights);
+  bool use_uniform_weights,
+  double uniform_weight);
 

@@ -8,7 +8,7 @@
 void arap_precompute(const Eigen::MatrixXd& V,
 	const Eigen::MatrixXi& F,
 	std::vector<Eigen::Matrix<double, 3, -1>> & K,
-  bool use_uniform_weights) {
+  bool use_uniform_weights, double uniform_weight) {
 
 
 	unsigned int numVertex = V.rows();
@@ -23,7 +23,7 @@ void arap_precompute(const Eigen::MatrixXd& V,
 	
 	//calculate cotagent matrix (with weights) w_i,j
 	Eigen::SparseMatrix<double> L;
-	cotagent_matrix(V, F, L, use_uniform_weights);
+	cotagent_matrix(V, F, L, use_uniform_weights, uniform_weight);
 
     std::vector<std::vector<double>> neighbors(numVertex);
     igl::adjacency_list(F, neighbors);
