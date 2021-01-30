@@ -122,20 +122,16 @@ int main(int argc, char *argv[]) {
 
     };
 
+    menu.callback_draw_viewer_menu = [&]() 
+    {
 
+    };
+    // draw the ImGUI window
+    // adapted from https://libigl.github.io/tutorial/#viewer-menu
     menu.callback_draw_custom_window = [&]()
     {
-      ImGui::SetNextWindowPos(ImVec2(180.0f * menu.menu_scaling(), 10), ImGuiCond_FirstUseEver);
-      ImGui::SetNextWindowSize(ImVec2(350, 160), ImGuiCond_FirstUseEver);
-      ImGui::Begin("Interactive ARAP", nullptr, ImGuiWindowFlags_NoSavedSettings);
+      ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoSavedSettings);
       ImGui::Text(controlInstructions.c_str());
-//      ImGui::Text("[right click]               Place new control point");
-//      ImGui::Text("[left click] + [drag]       Pick control point and move it");
-//      ImGui::Text("[drag]                      Rotation");
-//      ImGui::Text("L,l                         Load a new mesh in OFF format");
-//      ImGui::Text("N,n                         Update deformation (i.e., run next iteration of solver)");
-//      ImGui::Text("U,u                         Undo reset");
-//      ImGui::Text("R,r                         Reset all control points");
       if (uniform_weights)
         ImGui::Text("W, w                        Switch to cotangent weights");
       else
