@@ -51,15 +51,13 @@ const Eigen::RowVector3d red = { 0.8,0.0,0.1 };
 
 const std::string controlInstructions = R"(
 [right click]                       Place new control point
-[right click] + [ctl]               Remove control point
-[right click] + [alt]               Define Control Area
-[left click] + [drag]               Pick control point and move it
-[right click] + [alt] + [shift]     Define Control Area for Dragging
-[left click]+ [drag] +[shift]       Pick point in control Area and move complete control Area.
+[right click] + [alt]               Define constraint area with multiple control points
+[right click] + [ctl]               Remove control point/constraint area
+[left click] + [drag]               Pick control point/constraint area and move it/complete area
 [drag]                              Rotation
 L,l                                 Load a new mesh in OFF format
-U,u                                 Undo reset
 R,r                                 Reset all control points
+U,u                                 Undo reset
 
 )";
 
@@ -112,7 +110,6 @@ int main(int argc, char *argv[]) {
         }
 
         //compute step
-        // TODO: Fix arap computation when whole region is selected
         if(controlpoints.getPoints().rows() > 0 )
           arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix, uniform_weights);
 
@@ -129,13 +126,6 @@ int main(int argc, char *argv[]) {
       ImGui::SetNextWindowSize(ImVec2(350, 160), ImGuiCond_FirstUseEver);
       ImGui::Begin("Interactive ARAP", nullptr, ImGuiWindowFlags_NoSavedSettings);
       ImGui::Text(controlInstructions.c_str());
-//      ImGui::Text("[right click]               Place new control point");
-//      ImGui::Text("[left click] + [drag]       Pick control point and move it");
-//      ImGui::Text("[drag]                      Rotation");
-//      ImGui::Text("L,l                         Load a new mesh in OFF format");
-//      ImGui::Text("N,n                         Update deformation (i.e., run next iteration of solver)");
-//      ImGui::Text("U,u                         Undo reset");
-//      ImGui::Text("R,r                         Reset all control points");
       if (uniform_weights)
         ImGui::Text("W, w                        Switch to cotangent weights");
       else
@@ -192,7 +182,6 @@ int main(int argc, char *argv[]) {
                     // Clear all points
                     viewer.data().clear_points();
                     U = V;
-                    //set_base_mesh(U, F);
                 }
                 break;
             case 'U':
@@ -223,38 +212,27 @@ int main(int argc, char *argv[]) {
     viewer.callback_mouse_down = [&](igl::opengl::glfw::Viewer& viewer, int one, int two)->bool {
         last_mouse= Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y, 0);
         // Left click
-        if(one == 0)
-        {
-           //No button pressed or Shift pressed
-            if (two == 0 ||two==1) {
-                selectedPoint=controlpoints.addSelectedPoint(viewer,last_mouse);
-               
-               
-            }
-            //if shift +control pressed
-            else if (two == 3) {
-                controlpoints.removeSelectedPoint(viewer, last_mouse);
-            }
+        // Select control point to drag
+        if(one == 0) {
+            selectedPoint = controlpoints.addSelectedPoint(viewer,last_mouse);
         }
-        // right click
-        else
-        {
-            //No Control,Shift,Control+Shift
-            //Add point
+        // Right click
+        else {
+            // No Control/Alt
+            // Add point
             if (two == 0) {
-                
                 bool result = controlpoints.add(viewer,U, F);
                 return result;
             }
-            //Control
-            //Remove Point
+            // Control
+            // Remove Point
             else if (two == 2) {
                 bool result = controlpoints.remove(viewer, U, F);
                 return result;
             }
-            //Alt ==4 , Alt+shift=5
-            //Start/continue defining control area
-            else if (two == 4 ||two==5) {
+            // Alt
+            // Start/continue defining control area
+            else if (two == 4) {
                 isDefiningControlArea = true;
                 // Save screen coordinates to compute control points later
                 borderPixelsControlArea.addVertex(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y);
@@ -266,8 +244,6 @@ int main(int argc, char *argv[]) {
                                        viewer.core().view, viewer.core().proj, viewer.core().viewport).cast<double>();
                 return true;
             }
-           
-
         }
         return false;
 
@@ -275,42 +251,23 @@ int main(int argc, char *argv[]) {
 
     // This function is called when a keyboard key is release
     viewer.callback_key_up = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool {
-
-        //Alt has been released
-        // User stops pressing alt
+        // Alt has been released
+        // End of defining control area
         if (one == 342) {
-            
-            // End of defining control area
             isDefiningControlArea = false;
             borderPointsControlArea = Eigen::Matrix<double, -1, 3>();
             tempBorderPoint = Eigen::Matrix<double, -1, 3>();
-            
-            //if shift is still mantained pressed
-            if (two == 1) {
-                controlpoints.addSelectedPoints(viewer, V, borderPixelsControlArea);
-                borderPixelsControlArea.clearVertices();
-            }
-            else {
-                controlpoints.add(viewer, V, borderPixelsControlArea);
-                borderPixelsControlArea.clearVertices();
-                return true;
-            }
-            
-           
-        }//if user releases Shift
-        else if (one == 340) {
-            controlpoints.clearSelectedPoints();
+            controlpoints.add(viewer, V, borderPixelsControlArea);
+            borderPixelsControlArea.clearVertices();
+            return true;
         }
         return false;
     };
 
     // This function is called every time the mouse is moved
-    viewer.callback_mouse_move = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool
-    {
-      
+    viewer.callback_mouse_move = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool {
         if(selectedPoint != -1)
         {
-           
             Eigen::RowVector3f drag_mouse(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y,last_mouse(2));
             Eigen::RowVector3f drag_scene, last_scene;
             igl::unproject(
@@ -325,11 +282,8 @@ int main(int argc, char *argv[]) {
             );
                 
             auto translation = (drag_scene - last_scene).cast<double>();
-          /*  auto oldVal = controlpoints.getPoint(selectedPoint);
-            auto newValue = oldVal + (drag_scene-last_scene).cast<double>();*/
             controlpoints.updatePoints(translation);
             last_mouse = drag_mouse;
-       
             return true;
         }
         if (isDefiningControlArea) {
@@ -348,9 +302,7 @@ int main(int argc, char *argv[]) {
     // This function is called when the mouse button is released
     viewer.callback_mouse_up = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool
     {  
-        if (two == 0) {
-            controlpoints.clearSelectedPoints();
-        }
+        controlpoints.clearSelectedPoints();
         selectedPoint = -1;
         return false;
     };

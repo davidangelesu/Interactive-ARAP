@@ -24,13 +24,15 @@ class ControlPoints
     Eigen::VectorXi getPointsVertex();
     Eigen::SparseMatrix<double> getPointsAsMatrix(int numRows);
     inline Eigen::RowVector3d getPoint(int index) { return m_points[index]; }
-    inline void updatePoint(int index, Eigen::RowVector3d translataion) { m_points[index] =  getPoint(index)+ translataion; }
+    inline void updatePoint(int index, Eigen::RowVector3d translataion) { m_points[index] =  m_points[index] + translataion; }
     void updatePoints( Eigen::RowVector3d transltation);
   private:
     //Values of all control Points
     std::vector<Eigen::RowVector3d> m_points;
     //indices of vertices of all control points
     std::vector<unsigned int> m_pointsVertexIndex;
-    //indices of all Selected control Points (NOTE: indices of m_points vector)
+    //indices of all selected control points (NOTE: indices of m_points vector)
     std::vector<unsigned int> m_selectedPointsIndex;
+    // Constraint groups with all corresponding vertex indices
+    std::vector<std::vector<unsigned int>> m_constraintGroups;
 };

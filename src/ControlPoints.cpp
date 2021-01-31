@@ -33,10 +33,9 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
 /*Add control Points that are inside Control Area.*/
 bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  GUI::Polygon& controlArea)
 {
-    //Loop through the whole mesh!!
-    //Test each point
+    std::vector<unsigned int> constraintGroup;
     for (int i = 0; i < V.rows(); i++) {
-        //Project to Viewport
+        // Project to Viewport
         Eigen::Matrix<float,4,1> tmp;
         Eigen::RowVector3d control_point = V.row(i);
         tmp << V.row(i).transpose().cast<float>(),1;
@@ -48,7 +47,7 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  G
         tmp(0) = tmp(0) * viewer.core().viewport(2) + viewer.core().viewport(0);
         tmp(1) = tmp(1) * viewer.core().viewport(3) + viewer.core().viewport(1);
 
-        //TODO: Maybe create a group for all this constraints so that you can move them togetter????
+        // Add every vertex inside control area as control point
         if (controlArea.isInside(tmp.x(), tmp.y())) {
             // Check if control point not already added
             // If not, add it
@@ -57,41 +56,19 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  G
                 m_points.push_back(control_point);
                 m_pointsVertexIndex.push_back(i);
             }
+            // Add control point to constraint group
+            constraintGroup.push_back(i);
         }
+    }
+    // Add new constraint group, if not empty
+    if (!constraintGroup.empty()) {
+        m_constraintGroups.push_back(constraintGroup);
     }
     return false;
 };
 
-/*Add all control Points that are inside Control Area to list of selected control points.*/
-bool ControlPoints::addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, GUI::Polygon& controlArea)
-{
-    bool hasNewEntryAdded = false;
-    //Loop through all the control points
-    for (int i = 0; i < m_points.size(); i++)
-    {
-        //Project to Viewport
-        Eigen::Matrix<float, 4, 1> tmp;
-        Eigen::RowVector3d control_point = m_points[i];
-        tmp << control_point.transpose().cast<float>(), 1;
-        tmp = viewer.core().view * tmp;
-        tmp = viewer.core().proj * tmp;
-        tmp = tmp.array() / tmp(3);
-        tmp = tmp.array() * 0.5f + 0.5f;
-        tmp(0) = tmp(0) * viewer.core().viewport(2) + viewer.core().viewport(0);
-        tmp(1) = tmp(1) * viewer.core().viewport(3) + viewer.core().viewport(1);
-        
-        //Check if control Point is inside Control Area and not in list of selectedPoints.
-        if (controlArea.isInside( tmp.x(), tmp.y())
-            && (std::find(m_selectedPointsIndex.begin(), m_selectedPointsIndex.end(), i)== m_selectedPointsIndex.end())) {
-            m_selectedPointsIndex.push_back(i);
-            hasNewEntryAdded = true;
-        }
-    }
-    return hasNewEntryAdded;
-};
-
 long ControlPoints::addSelectedPoint(igl::opengl::glfw::Viewer& viewer,Eigen::Vector3f mouseLocation) {
-    //if there are no control Points
+    // If there are no control points
     if (m_points.size() == 0) {
         return -1;
     }
@@ -99,44 +76,32 @@ long ControlPoints::addSelectedPoint(igl::opengl::glfw::Viewer& viewer,Eigen::Ve
     igl::project(Eigen::MatrixXf(getPoints().cast<float>()),
         viewer.core().view, viewer.core().proj, viewer.core().viewport, projectedControlPoints);
 
-    //Calculate the norm of the difference of the mouse location and the projected control points
+    // Calculate the norm of the difference of the mouse location and the projected control points
     Eigen::VectorXf D = (projectedControlPoints.rowwise() - mouseLocation.transpose()).rowwise().norm();
-    //Obtain index of the selected point if it is close enough
+    // Obtain index of the selected point if it is close enough
     long selectedPoint = (D.minCoeff(&selectedPoint) < 30) ? selectedPoint : -1;
 
-    
-    //if selected point not already added...
-    if (selectedPoint!=-1 && std::find(m_selectedPointsIndex.begin(), m_selectedPointsIndex.end(),(int)selectedPoint) == m_selectedPointsIndex.end()) {
-        m_selectedPointsIndex.push_back(selectedPoint);
-       
+    if (selectedPoint!=-1) {
+        // If selected point is part of a constraint group, add all points of the group
+        for (unsigned int i=0; i < m_constraintGroups.size(); i++) {
+            std::vector<unsigned int> constraintGroup = m_constraintGroups[i];
+            if (std::find(constraintGroup.begin(), constraintGroup.end(), (int) m_pointsVertexIndex[selectedPoint]) != constraintGroup.end()) {
+                for (unsigned int j=0; j < constraintGroup.size(); j++) {
+                    auto it = find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(), (int) constraintGroup[j]);
+                    if (it != m_pointsVertexIndex.end()) {
+                        int idx = distance(m_pointsVertexIndex.begin(), it);
+                        m_selectedPointsIndex.push_back(idx);
+                    }
+                }
+            }
+        }
+        // Add selected point, if not already added trough constraint group
+        if (std::find(m_selectedPointsIndex.begin(), m_selectedPointsIndex.end(),(int)selectedPoint) == m_selectedPointsIndex.end()) {
+            m_selectedPointsIndex.push_back(selectedPoint);
+        }
     }
     return selectedPoint;
 }
-
-
-bool ControlPoints::removeSelectedPoint(igl::opengl::glfw::Viewer& viewer, Eigen::Vector3f mouseLocation) {
-    //if there are no control Points
-    if (m_points.size() == 0) {
-        return false;
-    }
-    Eigen::MatrixXf projectedControlPoints;
-    igl::project(Eigen::MatrixXf(getPoints().cast<float>()),
-        viewer.core().view, viewer.core().proj, viewer.core().viewport, projectedControlPoints);
-
-    //Calculate the norm of the difference of the mouse location and the projected control points
-    Eigen::VectorXf D = (projectedControlPoints.rowwise() - mouseLocation.transpose()).rowwise().norm();
-    //Obtain index of the selected point if it is close enough
-    long selectedPoint = (D.minCoeff(&selectedPoint) < 30) ? selectedPoint : -1;
-
-    //remove selected Point
-    if (selectedPoint != -1) {
-        std::remove(m_selectedPointsIndex.begin(), m_selectedPointsIndex.end(), (int)selectedPoint);
-        return true;
-    }
-    return false;
-}
-
-
 
 bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F)
 {
@@ -155,9 +120,28 @@ bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,
         bc.maxCoeff(&c);
         Eigen::RowVector3d control_point = V.row(F(fid, c));
 
-        // Check if control point not already added
-        // If iter is
-        auto iter = std::find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(), F(fid, c));
+        int idx = F(fid, c);
+
+        // If control point is part of a constraint group, remove all points of the group and whole group
+        for (unsigned int i=0; i < m_constraintGroups.size(); i++) {
+            std::vector<unsigned int> constraintGroup = m_constraintGroups[i];
+            if (std::find(constraintGroup.begin(), constraintGroup.end(), idx) != constraintGroup.end()) {
+                // Remove all points
+                for (unsigned int j=0; j < constraintGroup.size(); j++) {
+                    auto it = find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(), (int) constraintGroup[j]);
+                    if (it != m_pointsVertexIndex.end()) {
+                        int index = distance(m_pointsVertexIndex.begin(), it);
+                        m_points.erase(m_points.begin()+index);
+                        m_pointsVertexIndex.erase(m_pointsVertexIndex.begin() + index);
+                    }
+                }
+                // TODO: Remove constraint group while iterating over all groups
+                // Remove whole group
+                // m_constraintGroups.erase(m_constraintGroups.begin() + i);
+            }
+        }
+        // Remove control point, if not already removed trough constraint group
+        auto iter = std::find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(), idx);
         if (iter != m_pointsVertexIndex.end())
         {
             int index = iter - m_pointsVertexIndex.begin();
@@ -170,12 +154,8 @@ bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,
 }
 
 void ControlPoints::clearSelectedPoints() {
-   
     m_selectedPointsIndex.clear();
-   
 }
-
-
 
 Eigen::MatrixXd ControlPoints::getPoints()
 {
@@ -189,8 +169,6 @@ Eigen::MatrixXd ControlPoints::getPoints()
 
 Eigen::MatrixXd ControlPoints::getSelectedPoints()
 {
-   
-
     Eigen::MatrixXd result(m_selectedPointsIndex.size(),3);
    
     for (int i = 0; i < m_selectedPointsIndex.size(); i++)
@@ -209,7 +187,6 @@ Eigen::VectorXi ControlPoints::getPointsVertex()
     return result;
 }
 
-
 Eigen::SparseMatrix<double> ControlPoints::getPointsAsMatrix(int numRows)
 {
     Eigen::SparseMatrix<double> result(numRows,3);
@@ -227,8 +204,6 @@ Eigen::SparseMatrix<double> ControlPoints::getPointsAsMatrix(int numRows)
     return result;
 }   
 
-
-
 Eigen::MatrixXd ControlPoints::removeAllPoints()
 {
     Eigen::MatrixXd last_points(m_points.size(), 4);
@@ -239,7 +214,6 @@ Eigen::MatrixXd ControlPoints::removeAllPoints()
     return last_points;
 }
 
-
 void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints)
 {
     for(int i = 0; i < initialPoints.rows(); i++)
@@ -249,7 +223,6 @@ void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints)
         m_pointsVertexIndex.push_back(initialPoints(i, 3));
     }
 }
-
 
 void ControlPoints::updatePoints(Eigen::RowVector3d translation) {
     for (int i=0; i < m_selectedPointsIndex.size(); i++) {
