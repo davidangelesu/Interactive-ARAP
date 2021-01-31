@@ -21,7 +21,7 @@ bool onSegment(GUI::Point p, GUI::Point q, GUI::Point r)
 // 2 --> Counterclockwise 
 int orientation(GUI::Point p, GUI::Point q, GUI::Point r)
 {
-    int val = (q.y - p.y) * (r.x - q.x) -
+    double val = (q.y - p.y) * (r.x - q.x) -
         (q.x - p.x) * (r.y - q.y);
 
     if (val == 0) return 0; // colinear 
@@ -60,9 +60,9 @@ bool doIntersect(GUI::Point p1, GUI::Point q1, GUI::Point p2, GUI::Point q2)
 }
 
 // Returns true if the point p lies inside the polygon with n vertices 
-bool GUI::Polygon::isInside( int x, int y)
+bool GUI::Polygon::isInside( double x, double y)
 {
-    // There must be at least 3 vertices in polygon 
+    // There must be at least 3 vertices in polygon    
     if (m_vertices.size() < 3) return false;
 
     Point p_current{ x,y };
@@ -80,8 +80,11 @@ bool GUI::Polygon::isInside( int x, int y)
         // with the line segment from 'polygon at i' to 'polygon at next vertex' 
         Point p_1{ m_vertices[i].x,m_vertices[i].y };
         Point p_2{ m_vertices[next].x,m_vertices[next].y };
+        
+      
         if (doIntersect(p_1, p_2, p_current, p_extreme))
         {
+
             // If the point 'p' is colinear with line segment 'i-next', 
             // then check if it lies on segment. If it lies, return true, 
             // otherwise false 
