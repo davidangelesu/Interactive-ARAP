@@ -204,18 +204,19 @@ Eigen::SparseMatrix<double> ControlPoints::getPointsAsMatrix(int numRows)
     return result;
 }   
 
-Eigen::MatrixXd ControlPoints::removeAllPoints()
+std::tuple<Eigen::MatrixXd, std::vector<std::vector<unsigned int>>> ControlPoints::removeAllPoints()
 {
     Eigen::MatrixXd last_points(m_points.size(), 4);
     last_points.block(0,0,m_points.size(),3)= getPoints();
     last_points.block(0, 3, m_points.size(), 1) = getPointsVertex().cast <double>();
     m_points.clear();
     m_pointsVertexIndex.clear();
+    std::vector<std::vector<unsigned int>> last_groups = m_constraintGroups;
     m_constraintGroups.clear();
-    return last_points;
+    return {last_points, last_groups};
 }
 
-void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints)
+void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints, std::vector<std::vector<unsigned int>> initialGroups)
 {
     for(int i = 0; i < initialPoints.rows(); i++)
     {
@@ -223,6 +224,7 @@ void ControlPoints::setInitialPoints(Eigen::MatrixXd initialPoints)
         m_points.push_back(control_point);
         m_pointsVertexIndex.push_back(initialPoints(i, 3));
     }
+    m_constraintGroups = initialGroups;
 }
 
 void ControlPoints::updatePoints(Eigen::RowVector3d translation) {

@@ -10,8 +10,8 @@ class ControlPoints
   public:
     bool add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F);
     bool remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F);
-    Eigen::MatrixXd removeAllPoints();
-    void setInitialPoints(Eigen::MatrixXd initialPoints);
+    std::tuple<Eigen::MatrixXd, std::vector<std::vector<unsigned int>>> removeAllPoints();
+    void setInitialPoints(Eigen::MatrixXd initialPoints, std::vector<std::vector<unsigned int>> initialGroups);
     bool add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  GUI::Polygon& controlArea);
 
     long addSelectedPoint(igl::opengl::glfw::Viewer& viewer, Eigen::Vector3f mouseLocation);

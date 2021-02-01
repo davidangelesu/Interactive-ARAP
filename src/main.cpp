@@ -32,8 +32,11 @@ std::vector<Eigen::Matrix<double, 3, -1>> K;
 
 long selectedPoint = -1;
 Eigen::RowVector3f last_mouse;
-// Helper variable for 'undo'
+
+// Helper variables for 'undo'
 Eigen::MatrixXd last_controls;
+std::vector<std::vector<unsigned int>> last_groups;
+
 bool dragHappend = false;
 bool uniform_weights = false;
 
@@ -178,9 +181,9 @@ int main(int argc, char *argv[]) {
                 // Reset control point, if available
                 if(controlpoints.getPoints().size() != 0)
                 {
-                    last_controls = controlpoints.removeAllPoints();
-                    // Clear all points
-                    viewer.data().clear_points();
+                    auto last = controlpoints.removeAllPoints();
+                    last_controls = std::get<0>(last);
+                    last_groups = std::get<1>(last);
                     U = V;
                 }
                 break;
@@ -189,8 +192,9 @@ int main(int argc, char *argv[]) {
                 // Undo reset, if last control points exists
                 if(last_controls.size() != 0)
                 {
-                    controlpoints.setInitialPoints(last_controls);
+                    controlpoints.setInitialPoints(last_controls, last_groups);
                     last_controls = Eigen::MatrixXd();
+                    last_groups = std::vector<std::vector<unsigned int>>();
                }
                 break;
             case 'W':
