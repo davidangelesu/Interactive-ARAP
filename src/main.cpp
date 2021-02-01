@@ -260,7 +260,7 @@ int main(int argc, char *argv[]) {
             isDefiningControlArea = false;
             borderPointsControlArea = Eigen::Matrix<double, -1, 3>();
             tempBorderPoint = Eigen::Matrix<double, -1, 3>();
-            controlpoints.add(viewer, V, borderPixelsControlArea);
+            controlpoints.add(viewer, U, borderPixelsControlArea);
             borderPixelsControlArea.clearVertices();
             return true;
         }
