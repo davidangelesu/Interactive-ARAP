@@ -198,7 +198,6 @@ int main(int argc, char *argv[]) {
                 uniform_weights = !uniform_weights;
                 init_system_matrix(V, F, m_systemMatrix, uniform_weights);
                 arap_precompute(V, F, K, uniform_weights);
-
             default:
                 // Disable default keyboard events
                 return true;

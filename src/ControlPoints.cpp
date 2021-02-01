@@ -211,6 +211,7 @@ Eigen::MatrixXd ControlPoints::removeAllPoints()
     last_points.block(0, 3, m_points.size(), 1) = getPointsVertex().cast <double>();
     m_points.clear();
     m_pointsVertexIndex.clear();
+    m_constraintGroups.clear();
     return last_points;
 }
 
