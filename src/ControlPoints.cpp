@@ -93,7 +93,7 @@ bool ControlPoints::addSelectedPoints(igl::opengl::glfw::Viewer& viewer, Eigen::
 long ControlPoints::addSelectedPoint(igl::opengl::glfw::Viewer& viewer,Eigen::Vector3f mouseLocation) {
     //if there are no control Points
     if (m_points.size() == 0) {
-        return false;
+        return -1;
     }
     Eigen::MatrixXf projectedControlPoints;
     igl::project(Eigen::MatrixXf(getPoints().cast<float>()),
