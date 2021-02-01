@@ -123,21 +123,23 @@ bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,
         int idx = F(fid, c);
 
         // If control point is part of a constraint group, remove all points of the group and whole group
-        for (unsigned int i=0; i < m_constraintGroups.size(); i++) {
-            std::vector<unsigned int> constraintGroup = m_constraintGroups[i];
-            if (std::find(constraintGroup.begin(), constraintGroup.end(), idx) != constraintGroup.end()) {
+        std::vector<std::vector<unsigned int>>::iterator constraintGroupIter;
+        for(constraintGroupIter = m_constraintGroups.begin(); constraintGroupIter != m_constraintGroups.end(); ){
+            if(std::find((*constraintGroupIter).begin(), (*constraintGroupIter).end(), idx) != (*constraintGroupIter).end()) {
                 // Remove all points
-                for (unsigned int j=0; j < constraintGroup.size(); j++) {
-                    auto it = find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(), (int) constraintGroup[j]);
+                for (unsigned int j=0; j < (*constraintGroupIter).size(); j++) {
+                    auto it = find(m_pointsVertexIndex.begin(), m_pointsVertexIndex.end(),
+                                   (int) (*constraintGroupIter)[j]);
                     if (it != m_pointsVertexIndex.end()) {
                         int index = distance(m_pointsVertexIndex.begin(), it);
-                        m_points.erase(m_points.begin()+index);
+                        m_points.erase(m_points.begin() + index);
                         m_pointsVertexIndex.erase(m_pointsVertexIndex.begin() + index);
                     }
                 }
-                // TODO: Remove constraint group while iterating over all groups
-                // Remove whole group
-                // m_constraintGroups.erase(m_constraintGroups.begin() + i);
+                //Remove whole group
+                constraintGroupIter = m_constraintGroups.erase(constraintGroupIter);
+            } else {
+                ++constraintGroupIter;
             }
         }
         // Remove control point, if not already removed trough constraint group
