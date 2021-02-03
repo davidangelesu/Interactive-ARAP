@@ -39,7 +39,7 @@ std::vector<std::vector<unsigned int>> last_groups;
 
 bool dragHappend = false;
 bool uniform_weights = false;
-double uniform_weight_value = 0.0;
+double uniform_weight_value = 1.0;
 
 // defining Control Area:
 bool isDefiningControlArea = false;
