@@ -42,7 +42,6 @@ void arap_single_iteration(
 		Eigen::JacobiSVD<Eigen::Matrix3d> svd(S_i,Eigen::ComputeFullU|Eigen::ComputeFullV);
 		R[i] = svd.matrixV() * svd.matrixU().transpose();
 	}
-//	std::cout << "ROTATIONS COMPUTED\n";
 
 	//**********Global Optimization
     Eigen::SparseMatrix<double> systemMatrix = m_systemMatrix;
@@ -50,16 +49,17 @@ void arap_single_iteration(
     Eigen::VectorXd m_rhsY(numVertex);
     Eigen::VectorXd m_rhsZ(numVertex);
 
-    // Right hand side
+    // Initialize right hand side (see eq. 8 in https://igl.ethz.ch/projects/ARAP/arap_web.pdf)
     m_rhsX.setZero();
     m_rhsY.setZero();
     m_rhsZ.setZero();
 
-    //calculate cotagent matrix (with weights) w_i,j
+    // Calculate cotangent matrix (with weights) w_i,j
     Eigen::SparseMatrix<double> L;
     cotagent_matrix(V, F, L, use_uniform_weights,uniform_weigth);
 
     // Compute right hand side
+    // Loop over each vertex
     for (unsigned int i = 0; i < numVertex; ++i) {
         Eigen::Vector3d sum(0.0, 0.0, 0.0);
         // Loop over one-ring neighborhood
@@ -72,10 +72,11 @@ void arap_single_iteration(
         m_rhsZ(i) = sum.z();
     }
 
+    // Incorporate constraints
     for (int constraint = 0; constraint < constraints.rows(); constraint++) {
         Eigen::Vector3d c = constraints.row(constraint);
         int c_index = constraintsIndices(constraint);
-        // adapt rhs
+        // Adapt rhs
         for (unsigned int i = 0; i < numVertex; ++i) {
             if (systemMatrix.coeff(i, c_index) != 0.0) {
                 m_rhsX(i) -= systemMatrix.coeff(i, c_index) * c.x();
@@ -95,6 +96,8 @@ void arap_single_iteration(
             }
         }
     }
+
+    // Solve for new vertex positions
     /*static*/ Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> svd(systemMatrix);
     Eigen::VectorXd x = svd.solve(m_rhsX);
     Eigen::VectorXd y = svd.solve(m_rhsY);
@@ -104,5 +107,4 @@ void arap_single_iteration(
         U.row(i) = Eigen::Vector3d(x(i), y(i), z(i));
     }
 
-//    std::cout << "U has been updated\n";
 }

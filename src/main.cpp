@@ -28,6 +28,8 @@ Eigen::SparseMatrix<double> m_systemMatrix;
 //Control points for constraints
 ControlPoints controlpoints;
 
+// For precomputation
+// K = P * D (see eq. 5 in https://igl.ethz.ch/projects/ARAP/arap_web.pdf)
 std::vector<Eigen::Matrix<double, 3, -1>> K;
 
 long selectedPoint = -1;
@@ -41,13 +43,14 @@ bool dragHappend = false;
 bool uniform_weights = false;
 double uniform_weight_value = 1.0;
 
-// defining Control Area:
 bool isDefiningControlArea = false;
+// Border points of control area
+Eigen::Matrix<double, -1, 3> borderPointsControlArea;
+// Helper variable to display temporary border point during control area definition
+Eigen::Matrix<double, -1, 3> tempBorderPoint;
+
 //defining Dragging Control Area
 GUI::Polygon borderPixelsControlArea;
-
-Eigen::Matrix<double, -1, 3> borderPointsControlArea;
-Eigen::Matrix<double, -1, 3> tempBorderPoint;
 
 const Eigen::RowVector3d blue = {0.2,0.3,0.8};
 const Eigen::RowVector3d green = {0.2,0.6,0.3};
@@ -71,8 +74,6 @@ void uniform_weights_changed()
   init_system_matrix(V, F, m_systemMatrix, uniform_weights, uniform_weight_value);
   arap_precompute(V, F, K, uniform_weights, uniform_weight_value);
 }
-
-
 
 int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
@@ -101,11 +102,9 @@ int main(int argc, char *argv[]) {
         viewer.data().clear_points();
         viewer.data().clear_edges();
 
-
         viewer.data().add_points(controlpoints.getSelectedPoints(), red);
         viewer.data().add_points(controlpoints.getPoints(), blue);
         viewer.data().add_points(borderPointsControlArea, green);
-        
 
         // Draw edges between border points
         if (borderPointsControlArea.rows() > 0) {
@@ -125,10 +124,9 @@ int main(int argc, char *argv[]) {
         if(controlpoints.getPoints().rows() > 0 )
           arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix, uniform_weights, uniform_weight_value);
 
+        // Set new deformed vertices
         viewer.data().set_vertices(U);
-
       return false;
-
     };
 
     menu.callback_draw_viewer_menu = [&]()
@@ -165,7 +163,6 @@ int main(int argc, char *argv[]) {
             case 'l':
             {
                 // Load a new mesh in OFF format
-
                 std::string fname = igl::file_dialog_open();
 
                 if (fname.length() == 0)
@@ -191,7 +188,6 @@ int main(int argc, char *argv[]) {
                     igl::readOFF(fname, V, F);
                     U = V;
                     set_base_mesh(U, F);
-                    
                 } else {
                     printf("Error: %s is not a recognized file type.\n",extension.c_str());
                 }
@@ -199,10 +195,11 @@ int main(int argc, char *argv[]) {
             }
             case 'R':
             case 'r':
-                // Reset control point, if available
+                // Reset control points, if available
                 if(controlpoints.getPoints().size() != 0)
                 {
                     auto last = controlpoints.removeAllPoints();
+                    // Save control points and groups for 'undo'
                     last_controls = std::get<0>(last);
                     last_groups = std::get<1>(last);
                     U = V;
@@ -231,11 +228,11 @@ int main(int argc, char *argv[]) {
 
     // This function is called when the mouse button is pressed
     // Places a new control point when right mouse button is pressed on mesh
-    // Picks a control point when left mouse button is pressed
+    // Picks a control point/group when left mouse button is pressed
     viewer.callback_mouse_down = [&](igl::opengl::glfw::Viewer& viewer, int one, int two)->bool {
         last_mouse= Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y, 0);
         // Left click
-        // Select control point to drag
+        // Select control point/group to drag
         if(one == 0) {
             selectedPoint = controlpoints.addSelectedPoint(viewer,last_mouse);
         }
@@ -248,7 +245,7 @@ int main(int argc, char *argv[]) {
                 return result;
             }
             // Control
-            // Remove Point
+            // Remove point and possibly corresponding group
             else if (two == 2) {
                 bool result = controlpoints.remove(viewer, U, F);
                 return result;
@@ -288,6 +285,8 @@ int main(int argc, char *argv[]) {
     };
 
     // This function is called every time the mouse is moved
+    // Drags control point/group if one is selected
+    // Computes temporary edge between last border point and mouse cursor if user is defining control area
     viewer.callback_mouse_move = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool {
         if(selectedPoint != -1)
         {
@@ -323,6 +322,7 @@ int main(int argc, char *argv[]) {
     };
 
     // This function is called when the mouse button is released
+    // Deselect all selected points
     viewer.callback_mouse_up = [&](igl::opengl::glfw::Viewer&, int one, int two)->bool
     {  
         controlpoints.clearSelectedPoints();

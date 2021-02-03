@@ -6,9 +6,11 @@ void init_system_matrix(Eigen::MatrixXd &V, Eigen::MatrixXi &F, Eigen::SparseMat
     int numVertices = V.rows();
     systemMatrix = Eigen::SparseMatrix<double>(numVertices, numVertices);
 
+    // Compute weights
     Eigen::SparseMatrix<double> L;
     cotagent_matrix(V, F, L, use_uniform_weights, uniform_weight);
 
+    // Loop over each vertex
     for (unsigned int i = 0; i < numVertices; ++i) {
         std::vector<std::vector<double>> neighbors(numVertices);
         igl::adjacency_list(F, neighbors);

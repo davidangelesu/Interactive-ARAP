@@ -1,7 +1,7 @@
 #include "ControlPoints.h"
 
 /* Add Control Point in current location of Mouse*/
-bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eigen::MatrixXi F)
+bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd U, Eigen::MatrixXi F)
 {
   // Picked face
   int fid;
@@ -11,12 +11,12 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
   double x = viewer.current_mouse_x;
   double y = viewer.core().viewport(3) - viewer.current_mouse_y;
   if(igl::unproject_onto_mesh(Eigen::Vector2f(x,y), viewer.core().view,
-                              viewer.core().proj, viewer.core().viewport, V, F, fid, bc)) {
+                              viewer.core().proj, viewer.core().viewport, U, F, fid, bc)) {
 
       long c;
       // Entry with highest value corresponds to the closest vertex in the triangle.
       bc.maxCoeff(&c);
-      Eigen::RowVector3d control_point = V.row(F(fid,c));
+      Eigen::RowVector3d control_point = U.row(F(fid,c));
 
       // Check if control point not already added
       // If not, add it
@@ -31,14 +31,14 @@ bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer,Eigen::MatrixXd V, Eig
 }
 
 /*Add control Points that are inside Control Area.*/
-bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,  GUI::Polygon& controlArea)
+bool ControlPoints::add(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd U,  GUI::Polygon& controlArea)
 {
     std::vector<unsigned int> constraintGroup;
-    for (int i = 0; i < V.rows(); i++) {
+    for (int i = 0; i < U.rows(); i++) {
         // Project to Viewport
         Eigen::Matrix<float,4,1> tmp;
-        Eigen::RowVector3d control_point = V.row(i);
-        tmp << V.row(i).transpose().cast<float>(),1;
+        Eigen::RowVector3d control_point = U.row(i);
+        tmp << U.row(i).transpose().cast<float>(),1;
 
         tmp = viewer.core().view * tmp;
         tmp = viewer.core().proj * tmp;
@@ -103,7 +103,7 @@ long ControlPoints::addSelectedPoint(igl::opengl::glfw::Viewer& viewer,Eigen::Ve
     return selectedPoint;
 }
 
-bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V, Eigen::MatrixXi F)
+bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd U, Eigen::MatrixXi F)
 {
     // Picked face
     int fid;
@@ -113,12 +113,12 @@ bool ControlPoints::remove(igl::opengl::glfw::Viewer& viewer, Eigen::MatrixXd V,
     double x = viewer.current_mouse_x;
     double y = viewer.core().viewport(3) - viewer.current_mouse_y;
     if (igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer.core().view,
-        viewer.core().proj, viewer.core().viewport, V, F, fid, bc)) {
+        viewer.core().proj, viewer.core().viewport, U, F, fid, bc)) {
 
         long c;
         // Entry with highest value corresponds to the closest vertex in the triangle.
         bc.maxCoeff(&c);
-        Eigen::RowVector3d control_point = V.row(F(fid, c));
+        Eigen::RowVector3d control_point = U.row(F(fid, c));
 
         int idx = F(fid, c);
 
@@ -188,23 +188,6 @@ Eigen::VectorXi ControlPoints::getPointsVertex()
     }
     return result;
 }
-
-Eigen::SparseMatrix<double> ControlPoints::getPointsAsMatrix(int numRows)
-{
-    Eigen::SparseMatrix<double> result(numRows,3);
-    std::vector< Eigen::Triplet<double> > tripletList;
-    tripletList.reserve(m_points.size()*3);
-
-    for (int i = 0; i < m_pointsVertexIndex.size(); i++) {
-        tripletList.push_back(Eigen::Triplet<double>(i, 0, m_points[i][0]));
-        tripletList.push_back(Eigen::Triplet<double>(i, 1, m_points[i][1]));
-        tripletList.push_back(Eigen::Triplet<double>(i, 2, m_points[i][2]));
-    }
-
-    result.setFromTriplets(tripletList.begin(),tripletList.end());
-
-    return result;
-}   
 
 std::tuple<Eigen::MatrixXd, std::vector<std::vector<unsigned int>>> ControlPoints::removeAllPoints()
 {
