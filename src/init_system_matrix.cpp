@@ -2,12 +2,12 @@
 #include "cotagent_matrix.h"
 #include <igl/adjacency_list.h>
 
-void init_system_matrix(Eigen::MatrixXd &V, Eigen::MatrixXi &F, Eigen::SparseMatrix<double> &systemMatrix, bool use_uniform_weights) {
+void init_system_matrix(Eigen::MatrixXd &V, Eigen::MatrixXi &F, Eigen::SparseMatrix<double> &systemMatrix, bool use_uniform_weights, double uniform_weight) {
     int numVertices = V.rows();
     systemMatrix = Eigen::SparseMatrix<double>(numVertices, numVertices);
 
     Eigen::SparseMatrix<double> L;
-    cotagent_matrix(V, F, L, use_uniform_weights);
+    cotagent_matrix(V, F, L, use_uniform_weights, uniform_weight);
 
     for (unsigned int i = 0; i < numVertices; ++i) {
         std::vector<std::vector<double>> neighbors(numVertices);

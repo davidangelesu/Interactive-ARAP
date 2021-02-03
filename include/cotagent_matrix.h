@@ -18,6 +18,7 @@ void cotagent_matrix(
 	const Eigen::MatrixBase<DerivedV> & V,
 	const Eigen::MatrixBase<DerivedF> & F,
 	Eigen::SparseMatrix<Scalar> & L,
-  WeightFlag use_uniform_weights);
+  WeightFlag use_uniform_weights,
+  Scalar uniform_weight);
 
 #endif

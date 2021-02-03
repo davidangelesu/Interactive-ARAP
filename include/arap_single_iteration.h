@@ -18,4 +18,5 @@ void arap_single_iteration(
   const Eigen::MatrixXi& F,
   Eigen::MatrixXd& U,
   Eigen::SparseMatrix<double>& m_systemMatrix,
-  bool use_uniform_weights);
+  bool use_uniform_weights,
+  double uniform_weight);

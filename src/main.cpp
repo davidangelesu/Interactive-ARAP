@@ -39,6 +39,7 @@ std::vector<std::vector<unsigned int>> last_groups;
 
 bool dragHappend = false;
 bool uniform_weights = false;
+double uniform_weight_value = 0.0;
 
 // defining Control Area:
 bool isDefiningControlArea = false;
@@ -65,6 +66,14 @@ U,u                                 Undo reset
 )";
 
 
+void uniform_weights_changed()
+{
+  init_system_matrix(V, F, m_systemMatrix, uniform_weights, uniform_weight_value);
+  arap_precompute(V, F, K, uniform_weights, uniform_weight_value);
+}
+
+
+
 int main(int argc, char *argv[]) {
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
@@ -81,9 +90,9 @@ int main(int argc, char *argv[]) {
         viewer.data().face_based = true;
         // Align viewer such that mesh fills entire window
         viewer.core().align_camera_center(vertices, faces);
-        arap_precompute(vertices, faces, K, uniform_weights);
+        arap_precompute(vertices, faces, K, uniform_weights, uniform_weight_value);
         // Init system matrix
-        init_system_matrix(vertices, faces, m_systemMatrix, uniform_weights);
+        init_system_matrix(vertices, faces, m_systemMatrix, uniform_weights, uniform_weight_value);
     };
 
     // This function is called before the draw procedure of Preview3D
@@ -114,7 +123,7 @@ int main(int argc, char *argv[]) {
 
         //compute step
         if(controlpoints.getPoints().rows() > 0 )
-          arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix, uniform_weights);
+          arap_single_iteration( K, controlpoints.getPoints(), controlpoints.getPointsVertex(), V, F, U, m_systemMatrix, uniform_weights, uniform_weight_value);
 
         viewer.data().set_vertices(U);
 
@@ -122,12 +131,24 @@ int main(int argc, char *argv[]) {
 
     };
 
+    menu.callback_draw_viewer_menu = [&]()
+    {
+      if (ImGui::Checkbox("use uniform weights", &uniform_weights))
+      {
+        uniform_weights_changed();
+      }
+      if (ImGui::InputDouble("uniform weight", &uniform_weight_value))
+      {
+        uniform_weights_changed();
+      }
 
+    };
+
+    // draw the ImGUI window
+    // adapted from https://libigl.github.io/tutorial/#viewer-menu
     menu.callback_draw_custom_window = [&]()
     {
-      ImGui::SetNextWindowPos(ImVec2(180.0f * menu.menu_scaling(), 10), ImGuiCond_FirstUseEver);
-      ImGui::SetNextWindowSize(ImVec2(350, 160), ImGuiCond_FirstUseEver);
-      ImGui::Begin("Interactive ARAP", nullptr, ImGuiWindowFlags_NoSavedSettings);
+      ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoSavedSettings);
       ImGui::Text(controlInstructions.c_str());
       if (uniform_weights)
         ImGui::Text("W, w                        Switch to cotangent weights");
@@ -200,8 +221,7 @@ int main(int argc, char *argv[]) {
             case 'W':
             case 'w':
                 uniform_weights = !uniform_weights;
-                init_system_matrix(V, F, m_systemMatrix, uniform_weights);
-                arap_precompute(V, F, K, uniform_weights);
+                uniform_weights_changed();
             default:
                 // Disable default keyboard events
                 return true;

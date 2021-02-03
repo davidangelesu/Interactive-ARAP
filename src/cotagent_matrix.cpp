@@ -8,7 +8,8 @@ void cotagent_matrix(
 	const Eigen::MatrixBase<DerivedV> & V,
 	const Eigen::MatrixBase<DerivedF> & F,
 	Eigen::SparseMatrix<Scalar> & L,
-  WeightFlag use_uniform_weights)
+  WeightFlag use_uniform_weights,
+  Scalar uniform_weight)
 {
 	unsigned int numVertices = V.rows();
 	unsigned int numFaces = F.rows();
@@ -39,7 +40,7 @@ void cotagent_matrix(
 			//cotagent at oppositeVertex 
 			double cot = cotagent(p_i,p_j,p_oppositeVertex);
       if(use_uniform_weights)
-        cot = 1.0;
+        cot = uniform_weight;
 
 			//per edge weight contribution
 			vectorOfTriplets.push_back(Eigen::Triplet<Scalar>(v_i, v_j, .5* cot));
@@ -57,7 +58,7 @@ void cotagent_matrix(
 	L.setFromTriplets(vectorOfTriplets.begin(), vectorOfTriplets.end());
 };
 
-template void cotagent_matrix<Eigen::Matrix<double, -1, -1, 1, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, double>(Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> > const&, Eigen::MatrixBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::SparseMatrix<double, 0, int>&, bool);
-template void cotagent_matrix<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, double>(Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::MatrixBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::SparseMatrix<double, 0, int>&, bool);
+template void cotagent_matrix<Eigen::Matrix<double, -1, -1, 1, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, double>(Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> > const&, Eigen::MatrixBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::SparseMatrix<double, 0, int>&, bool, double);
+template void cotagent_matrix<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, double>(Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 0, -1, -1> > const&, Eigen::MatrixBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::SparseMatrix<double, 0, int>&, bool, double);
 
 
