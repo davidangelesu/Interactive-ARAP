@@ -260,7 +260,7 @@ int main(int argc, char *argv[]) {
                 // Save world coordinates to display control area in GUI
                 borderPointsControlArea.conservativeResize(borderPointsControlArea.rows() + 1, borderPointsControlArea.cols());
                 borderPointsControlArea.row(borderPointsControlArea.rows() - 1) =
-                        igl::unproject(Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y, 0),
+                        igl::unproject(Eigen::Vector3f(viewer.current_mouse_x, viewer.core().viewport(3) - viewer.current_mouse_y,  U.col(2).maxCoeff()),
                                        viewer.core().view, viewer.core().proj, viewer.core().viewport).cast<double>();
                 return true;
             }
