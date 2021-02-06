@@ -336,5 +336,6 @@ int main(int argc, char *argv[]) {
     set_base_mesh(U, F);
 
     viewer.data().point_size = 20;
+    viewer.core().set_rotation_type(igl::opengl::ViewerCore::ROTATION_TYPE_TRACKBALL);
     viewer.launch();
 }
