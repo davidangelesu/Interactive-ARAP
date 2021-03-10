@@ -2,13 +2,13 @@
 
 For the final project of  3D scanning and motion capturing class we implemented an Interactive ARAP based on the work done by Prof. Dr. Olga Sorkine and Prof. Dr. Marc Alexa (see references).
 
-![application](./ref/app_1.gif)
+![application](/ref/app_1.gif)
 
 A more detailed explanation of our work is found in the [pdf file](./ref/3D_scanning_final_report.pdf) contained in our repo.
 
 We compared our implementation with the reference paper, and we succesfully obtained a rigid as possible deformation.
 
-![application comparison](./ref/app_comparison.png)
+![application comparison](/ref/app_comparison.png)
 
 
 ## References
